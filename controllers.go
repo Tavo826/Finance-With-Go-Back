@@ -41,7 +41,9 @@ func getTransactions(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transactions)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Transactions obtained successfully",
+		"body":    transactions})
 }
 
 func getTransaction(c *gin.Context) {
@@ -61,7 +63,9 @@ func getTransaction(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transaction)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Transaction obtained successfully",
+		"body":    transaction})
 }
 
 func createTransaction(c *gin.Context) {
@@ -74,8 +78,9 @@ func createTransaction(c *gin.Context) {
 	}
 
 	loc, _ := time.LoadLocation("America/Bogota")
+	localDate := time.Now().In(loc).String()
 	transaction.CreatedAt = time.Now()
-	transaction.CreatedAtString = time.Now().In(loc).String()
+	transaction.CreatedAtString = localDate[:19]
 
 	result, err := db.InsertOne(context.Background(), transaction)
 
@@ -87,8 +92,8 @@ func createTransaction(c *gin.Context) {
 	transaction.ID = result.InsertedID
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message":     "Transaction created succesfully",
-		"transaction": transaction,
+		"message": "Transaction created succesfully",
+		"body":    transaction,
 	})
 
 }
@@ -128,8 +133,8 @@ func updateTransaction(c *gin.Context) {
 	updatedTransaction.ID = result.UpsertedID
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":     "Transaction updated succesfully",
-		"transaction": updatedTransaction,
+		"message": "Transaction updated succesfully",
+		"body":    updatedTransaction,
 	})
 
 }
