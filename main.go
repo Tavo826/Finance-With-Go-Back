@@ -14,6 +14,7 @@ func main() {
 	router := gin.Default()
 	router.Use(corsMiddleware())
 
+	router.GET("/", getStatus)
 	router.GET("/status", getStatus)
 	router.GET("/transactions", getTransactions)
 	router.GET("/transactions/:id", getTransaction)
