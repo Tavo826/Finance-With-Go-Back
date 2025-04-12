@@ -22,7 +22,7 @@ func main() {
 	router.PUT("/transactions/:id", updateTransaction)
 	router.DELETE("/transactions/:id", deleteTransaction)
 
-	if err := router.Run(":8080"); err != nil {
+	if err := router.Run(":8000"); err != nil {
 		log.Fatal("Unable to start server. Error: ", err.Error())
 	}
 }
