@@ -77,10 +77,7 @@ func createTransaction(c *gin.Context) {
 		return
 	}
 
-	loc, _ := time.LoadLocation("America/Bogota")
-	localDate := time.Now().In(loc).String()
 	transaction.CreatedAt = time.Now()
-	transaction.CreatedAtString = localDate[:19]
 
 	result, err := db.InsertOne(context.Background(), transaction)
 
