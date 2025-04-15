@@ -28,7 +28,7 @@ func main() {
 }
 
 func corsMiddleware() gin.HandlerFunc {
-	originString := "http://localhost:4200, https://tavo826.github.io/"
+	originString := "http://localhost:4200, https://tavo826.github.io/, https://transcendent-brioche-97eea6.netlify.app"
 	var allowedOrigins []string
 	if originString != "" {
 		allowedOrigins = strings.Split(originString, ",")
