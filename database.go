@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -15,10 +16,10 @@ var ctx context.Context
 
 func init() {
 
-	/*err := godotenv.Load()
+	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
-	}*/
+	}
 
 	clientOptions := options.Client().ApplyURI(os.Getenv("MONGO_CONNECTION_STRING"))
 

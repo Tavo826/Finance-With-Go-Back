@@ -7,9 +7,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+var validate = validator.New()
 
 func getStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
@@ -21,7 +25,9 @@ func getTransactions(c *gin.Context) {
 
 	var transactions []Transaction
 
-	cursor, err := db.Find(context.Background(), bson.M{})
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
+	cursor, err := db.Find(context.Background(), bson.D{}, findOptions)
 
 	if err != nil {
 		log.Fatal("Error searching in database: ", err.Error())
@@ -77,6 +83,14 @@ func createTransaction(c *gin.Context) {
 		return
 	}
 
+	if err := validate.Struct(transaction); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Error input",
+			"error":   err.Error(),
+		})
+		return
+	}
+
 	transaction.CreatedAt = time.Now()
 
 	result, err := db.InsertOne(context.Background(), transaction)
@@ -111,11 +125,21 @@ func updateTransaction(c *gin.Context) {
 		return
 	}
 
+	if err := validate.Struct(updatedTransaction); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Error input",
+			"error":   err.Error(),
+		})
+		return
+	}
+
 	updatedTransaction.UpdatedAt = time.Now()
 
 	update := bson.M{"$set": updatedTransaction}
 
 	result, err := db.UpdateOne(context.Background(), bson.M{"_id": objectId}, update)
+
+	updatedTransaction.ID = result.UpsertedID
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to update transaction"})
