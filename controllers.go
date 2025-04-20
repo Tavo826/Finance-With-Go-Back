@@ -1,9 +1,9 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,9 +25,35 @@ func getTransactions(c *gin.Context) {
 
 	var transactions []Transaction
 
+	page, err := strconv.Atoi(c.Query("page"))
+
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(c.Query("limit"))
+
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	filter := bson.D{}
+	total, err := db.CountDocuments(c, filter)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed transaction count: " + err.Error()})
+		return
+	}
+
+	log.Print("Total documents: ", total)
+	log.Print("Int64 limit: ", int64(limit))
+
+	offset := int64((page - 1) * limit)
+
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
-	cursor, err := db.Find(context.Background(), bson.D{}, findOptions)
+	findOptions.SetSkip(offset)
+	findOptions.SetLimit(int64(limit))
+	cursor, err := db.Find(c, bson.D{}, findOptions)
 
 	if err != nil {
 		log.Fatal("Error searching in database: ", err.Error())
@@ -35,21 +61,32 @@ func getTransactions(c *gin.Context) {
 		return
 	}
 
-	defer cursor.Close(context.Background())
+	defer cursor.Close(c)
 
-	if !cursor.Next(ctx) {
+	for cursor.Next(c) {
+		var transaction Transaction
+		if err := cursor.Decode(&transaction); err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to deserialize transactions"})
+			return
+		}
+		log.Print("Transaction: ", transaction)
+		transactions = append(transactions, transaction)
+	}
+
+	if len(transactions) == 0 {
 		c.AbortWithStatus(http.StatusNoContent)
 		return
 	}
 
-	if err := cursor.All(context.Background(), &transactions); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to deserialize transactions"})
-		return
-	}
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Transactions obtained successfully",
-		"body":    transactions})
+		"message":        "Transactions obtained successfully",
+		"page":           page,
+		"limit":          limit,
+		"totalDocuments": total,
+		"totalPages":     totalPages,
+		"body":           transactions})
 }
 
 func getTransaction(c *gin.Context) {
@@ -64,7 +101,7 @@ func getTransaction(c *gin.Context) {
 
 	var transaction Transaction
 
-	if err := db.FindOne(context.Background(), bson.M{"_id": objectId}).Decode(&transaction); err != nil {
+	if err := db.FindOne(c, bson.M{"_id": objectId}).Decode(&transaction); err != nil {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Transaction not found"})
 		return
 	}
@@ -93,7 +130,7 @@ func createTransaction(c *gin.Context) {
 
 	transaction.CreatedAt = time.Now()
 
-	result, err := db.InsertOne(context.Background(), transaction)
+	result, err := db.InsertOne(c, transaction)
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to create transaction"})
@@ -137,7 +174,7 @@ func updateTransaction(c *gin.Context) {
 
 	update := bson.M{"$set": updatedTransaction}
 
-	result, err := db.UpdateOne(context.Background(), bson.M{"_id": objectId}, update)
+	result, err := db.UpdateOne(c, bson.M{"_id": objectId}, update)
 
 	updatedTransaction.ID = result.UpsertedID
 
@@ -170,7 +207,7 @@ func deleteTransaction(c *gin.Context) {
 		return
 	}
 
-	result, err := db.DeleteOne(context.Background(), bson.M{"_id": objectId})
+	result, err := db.DeleteOne(c, bson.M{"_id": objectId})
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete transaction"})
