@@ -2,6 +2,7 @@ package http
 
 import (
 	"personal-finance/adapter/config"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -21,10 +22,12 @@ func NewRouter(
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	allowedOrigins := strings.Split(config.App.AllowedOrigins, ",")
+
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:4200", "https://tavo826.github.io", "https://transcendent-brioche-97eea6.netlify.app"},
+		AllowOrigins:     allowedOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
