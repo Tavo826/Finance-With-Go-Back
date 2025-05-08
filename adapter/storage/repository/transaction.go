@@ -4,6 +4,7 @@ import (
 	"context"
 	"personal-finance/adapter/config"
 	"personal-finance/core/domain"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,7 +24,6 @@ func NewTransactionRepository(db *mongo.Database, config *config.DB) *Transactio
 
 func (tr *TransactionRepository) GetTransactions(ctx context.Context, page, limit uint64) ([]domain.Transaction, any, any, error) {
 
-	var transaction domain.Transaction
 	var transactions []domain.Transaction
 
 	filter := bson.D{}
@@ -39,8 +39,8 @@ func (tr *TransactionRepository) GetTransactions(ctx context.Context, page, limi
 	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
 	findOptions.SetSkip(offset)
 	findOptions.SetLimit(int64(limit))
-	cursor, err := tr.db.Find(ctx, bson.D{}, findOptions)
 
+	cursor, err := tr.db.Find(ctx, bson.D{}, findOptions)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -48,6 +48,73 @@ func (tr *TransactionRepository) GetTransactions(ctx context.Context, page, limi
 	defer cursor.Close(ctx)
 
 	for cursor.Next(ctx) {
+		var transaction domain.Transaction
+		if err := cursor.Decode(&transaction); err != nil {
+			return nil, nil, nil, err
+		}
+		transactions = append(transactions, transaction)
+	}
+
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
+
+	return transactions, total, totalPages, nil
+}
+
+func (tr *TransactionRepository) GetTransactionsByDate(
+	ctx context.Context,
+	page, limit uint64,
+	year int,
+	month int,
+) ([]domain.Transaction, any, any, error) {
+
+	var transactions []domain.Transaction
+	var filter bson.M
+
+	if month == 0 {
+
+		startDate := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+		endDate := time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)
+
+		filter = bson.M{
+			"created_at": bson.M{
+				"$gte": startDate,
+				"$lt":  endDate,
+			},
+		}
+	} else {
+
+		startDate := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+		endDate := startDate.AddDate(0, 1, 0)
+
+		filter = bson.M{
+			"created_at": bson.M{
+				"$gte": startDate,
+				"$lt":  endDate,
+			},
+		}
+	}
+
+	total, err := tr.db.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	offset := int64((page - 1) * limit)
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
+	findOptions.SetSkip(offset)
+	findOptions.SetLimit(int64(limit))
+
+	cursor, err := tr.db.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var transaction domain.Transaction
 		if err := cursor.Decode(&transaction); err != nil {
 			return nil, nil, nil, err
 		}

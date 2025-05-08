@@ -32,6 +32,21 @@ func (ts *TransactionService) GetTransactions(ctx context.Context, page, limit u
 	return transactions, totalDocuments, totalPages, nil
 }
 
+func (ts *TransactionService) GetTransactionsByDate(
+	ctx context.Context,
+	page, limit uint64,
+	year int,
+	month int,
+) ([]domain.Transaction, any, any, error) {
+
+	transactions, totalDocuments, totalPages, err := ts.repo.GetTransactionsByDate(ctx, page, limit, year, month)
+	if err != nil {
+		return nil, nil, nil, domain.ErrInternal
+	}
+
+	return transactions, totalDocuments, totalPages, nil
+}
+
 func (ts *TransactionService) GetTransaction(ctx context.Context, id string) (*domain.Transaction, error) {
 
 	transaction, err := ts.repo.GetTransaction(ctx, id)

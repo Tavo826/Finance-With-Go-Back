@@ -46,6 +46,7 @@ func NewRouter(
 		transaction := v1.Group("/transactions")
 		{
 			transaction.GET("/", transactionHandler.GetTransactions)
+			transaction.GET("/filter", transactionHandler.GetTransactionsByDate)
 			transaction.GET("/:id", transactionHandler.GetTransaction)
 			transaction.POST("/", transactionHandler.CreateTransaction)
 			transaction.PUT("/:id", transactionHandler.UpdateTransaction)

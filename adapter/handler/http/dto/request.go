@@ -7,6 +7,12 @@ type PaginatedRequest struct {
 	Limit uint64 `form:"limit" binding:"required"`
 }
 
+type DateFilterRequest struct {
+	*PaginatedRequest
+	Month int `form:"month" binding:"min=0,max=12"`
+	Year  int `form:"year" binding:"required"`
+}
+
 type IdRequest struct {
 	ID string `uri:"id" binding:"required"`
 }
