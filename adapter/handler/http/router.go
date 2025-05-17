@@ -2,6 +2,7 @@ package http
 
 import (
 	"personal-finance/adapter/config"
+	"personal-finance/adapter/handler/http/token"
 	"strings"
 	"time"
 
@@ -16,11 +17,14 @@ type Router struct {
 func NewRouter(
 	config *config.Container,
 	transactionHandler TransactionHandler,
+	authHandler AuthHandler,
 ) (*Router, error) {
 
 	if config.App.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	middleware := token.NewAuthMiddleware()
 
 	allowedOrigins := strings.Split(config.App.AllowedOrigins, ",")
 
@@ -43,9 +47,16 @@ func NewRouter(
 			status.GET("/status", transactionHandler.GetStatus)
 		}
 
-		transaction := v1.Group("/transactions")
+		auth := v1.Group("/users")
 		{
-			transaction.GET("/", transactionHandler.GetTransactions)
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+		}
+
+		transaction := v1.Group("/transactions")
+		transaction.Use(middleware.Implement(config.Token))
+		{
+			transaction.GET("/", transactionHandler.GetTransactionsByUserId)
 			transaction.GET("/filter", transactionHandler.GetTransactionsByDate)
 			transaction.GET("/:id", transactionHandler.GetTransaction)
 			transaction.POST("/", transactionHandler.CreateTransaction)

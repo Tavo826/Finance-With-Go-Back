@@ -28,9 +28,9 @@ func (th *TransactionHandler) GetStatus(ctx *gin.Context) {
 	dto.HandleSuccess(ctx, response)
 }
 
-func (th *TransactionHandler) GetTransactions(ctx *gin.Context) {
+func (th *TransactionHandler) GetTransactionsByUserId(ctx *gin.Context) {
 
-	var req dto.PaginatedRequest
+	var req dto.TransactionByUserRequest
 	var transactionList []dto.TransactionResponse
 
 	if err := ctx.Bind(&req); err != nil {

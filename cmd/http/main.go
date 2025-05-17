@@ -43,7 +43,11 @@ func main() {
 	transactionService := service.NewTransactionService(transactionRepo)
 	transactionHandler := http.NewTransactionHandler(transactionService, validate)
 
-	router, err := http.NewRouter(config, *transactionHandler)
+	authRepo := repository.NewAuthRepository(db, config.DB)
+	authService := service.NewAuthService(authRepo)
+	authHandler := http.NewAuthHandler(authService, validate, config.Token)
+
+	router, err := http.NewRouter(config, *transactionHandler, *authHandler)
 	if err != nil {
 		slog.Error("Error initializing router", "error", err)
 		os.Exit(1)

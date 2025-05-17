@@ -43,6 +43,7 @@ type ErrorResponse struct {
 var errorStatusMap = map[error]int{
 	domain.ErrInternal:                   http.StatusInternalServerError,
 	domain.ErrDataNotFound:               http.StatusNotFound,
+	domain.ErrNoDocuments:                http.StatusNotFound,
 	domain.ErrConflictingData:            http.StatusConflict,
 	domain.ErrInvalidCredentials:         http.StatusUnauthorized,
 	domain.ErrUnauthorized:               http.StatusUnauthorized,
@@ -52,9 +53,8 @@ var errorStatusMap = map[error]int{
 	domain.ErrInvalidToken:               http.StatusUnauthorized,
 	domain.ErrExpiredToken:               http.StatusUnauthorized,
 	domain.ErrForbidden:                  http.StatusForbidden,
+	domain.ErrUserAlreadyExists:          http.StatusBadRequest,
 	domain.ErrNoUpdatedData:              http.StatusBadRequest,
-	domain.ErrInsufficientStock:          http.StatusBadRequest,
-	domain.ErrInsufficientPayment:        http.StatusBadRequest,
 }
 
 func NewTransactionResponse(transaction *domain.Transaction) TransactionResponse {

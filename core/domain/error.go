@@ -5,10 +5,10 @@ import "errors"
 var (
 	ErrInternal                   = errors.New("internal error")
 	ErrDataNotFound               = errors.New("data not found")
+	ErrNoDocuments                = errors.New("mongo: no documents in result")
 	ErrNoUpdatedData              = errors.New("no data to update")
 	ErrConflictingData            = errors.New("data conflicts with existing data in unique column")
-	ErrInsufficientStock          = errors.New("product stock is not enough")
-	ErrInsufficientPayment        = errors.New("total paid is less than total price")
+	ErrUserAlreadyExists          = errors.New("user email already exists")
 	ErrTokenDuration              = errors.New("invalid token duration format")
 	ErrTokenCreation              = errors.New("error creating token")
 	ErrExpiredToken               = errors.New("access token has expired")

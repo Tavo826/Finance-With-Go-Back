@@ -54,6 +54,9 @@ func (ts *TransactionService) GetTransaction(ctx context.Context, id string) (*d
 		if err == domain.ErrDataNotFound {
 			return nil, err
 		}
+		if err.Error() == domain.ErrNoDocuments.Error() {
+			return nil, domain.ErrNoDocuments
+		}
 		return nil, domain.ErrInternal
 	}
 

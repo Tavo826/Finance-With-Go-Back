@@ -2,13 +2,13 @@ package dto
 
 import "time"
 
-type PaginatedRequest struct {
+type TransactionByUserRequest struct {
 	Page  uint64 `form:"page" binding:"required"`
 	Limit uint64 `form:"limit" binding:"required"`
 }
 
 type DateFilterRequest struct {
-	*PaginatedRequest
+	*TransactionByUserRequest
 	Month int `form:"month" binding:"min=0,max=12"`
 	Year  int `form:"year" binding:"required"`
 }

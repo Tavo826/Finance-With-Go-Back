@@ -8,8 +8,9 @@ import (
 
 type (
 	Container struct {
-		App *App
-		DB  *DB
+		App   *App
+		DB    *DB
+		Token *Token
 	}
 
 	App struct {
@@ -23,7 +24,11 @@ type (
 		Connection   string
 		Database     string
 		Transactions string
-		User         string
+		Users        string
+	}
+
+	Token struct {
+		JwtSecret string
 	}
 )
 
@@ -47,11 +52,16 @@ func New() (*Container, error) {
 		Connection:   os.Getenv("MONGO_CONNECTION_STRING"),
 		Database:     os.Getenv("MONGO_DATABASE_NAME"),
 		Transactions: os.Getenv("MONGO_COLLECTION_TRANSACTION"),
-		User:         os.Getenv("MONGO_COLLECTION_USER"),
+		Users:        os.Getenv("MONGO_COLLECTION_USER"),
+	}
+
+	token := &Token{
+		JwtSecret: os.Getenv("JWT_SECRET"),
 	}
 
 	return &Container{
 		app,
 		db,
+		token,
 	}, nil
 }
