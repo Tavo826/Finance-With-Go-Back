@@ -22,9 +22,9 @@ func (ts *TransactionService) GetStatus(ctx context.Context) string {
 	return "OK"
 }
 
-func (ts *TransactionService) GetTransactions(ctx context.Context, page, limit uint64) ([]domain.Transaction, any, any, error) {
+func (ts *TransactionService) GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, any, any, error) {
 
-	transactions, totalDocuments, totalPages, err := ts.repo.GetTransactions(ctx, page, limit)
+	transactions, totalDocuments, totalPages, err := ts.repo.GetTransactionsByUserId(ctx, page, limit, userId)
 	if err != nil {
 		return nil, nil, nil, domain.ErrInternal
 	}
@@ -34,12 +34,13 @@ func (ts *TransactionService) GetTransactions(ctx context.Context, page, limit u
 
 func (ts *TransactionService) GetTransactionsByDate(
 	ctx context.Context,
+	userId string,
 	page, limit uint64,
 	year int,
 	month int,
 ) ([]domain.Transaction, any, any, error) {
 
-	transactions, totalDocuments, totalPages, err := ts.repo.GetTransactionsByDate(ctx, page, limit, year, month)
+	transactions, totalDocuments, totalPages, err := ts.repo.GetTransactionsByDate(ctx, userId, page, limit, year, month)
 	if err != nil {
 		return nil, nil, nil, domain.ErrInternal
 	}

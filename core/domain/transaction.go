@@ -6,6 +6,7 @@ import (
 
 type Transaction struct {
 	ID               string    `json:"_id" bson:"_id,omitempty"`
+	UserId           string    `json:"user_id" bson:"user_id" validate:"required"`
 	Amount           float64   `json:"amount" validate:"required"`
 	Type             string    `json:"type" validate:"required"`
 	Subject          string    `json:"subject" validate:"required"`

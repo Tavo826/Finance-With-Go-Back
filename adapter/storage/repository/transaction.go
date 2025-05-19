@@ -22,11 +22,13 @@ func NewTransactionRepository(db *mongo.Database, config *config.DB) *Transactio
 	}
 }
 
-func (tr *TransactionRepository) GetTransactions(ctx context.Context, page, limit uint64) ([]domain.Transaction, any, any, error) {
+func (tr *TransactionRepository) GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, any, any, error) {
 
 	var transactions []domain.Transaction
 
-	filter := bson.D{}
+	filter := bson.M{
+		"user_id": userId,
+	}
 	total, err := tr.db.CountDocuments(ctx, filter)
 
 	if err != nil {
@@ -40,7 +42,7 @@ func (tr *TransactionRepository) GetTransactions(ctx context.Context, page, limi
 	findOptions.SetSkip(offset)
 	findOptions.SetLimit(int64(limit))
 
-	cursor, err := tr.db.Find(ctx, bson.D{}, findOptions)
+	cursor, err := tr.db.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -62,6 +64,7 @@ func (tr *TransactionRepository) GetTransactions(ctx context.Context, page, limi
 
 func (tr *TransactionRepository) GetTransactionsByDate(
 	ctx context.Context,
+	userId string,
 	page, limit uint64,
 	year int,
 	month int,
@@ -76,6 +79,7 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 		endDate := time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)
 
 		filter = bson.M{
+			"user_id": userId,
 			"created_at": bson.M{
 				"$gte": startDate,
 				"$lt":  endDate,
@@ -87,6 +91,7 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 		endDate := startDate.AddDate(0, 1, 0)
 
 		filter = bson.M{
+			"user_id": userId,
 			"created_at": bson.M{
 				"$gte": startDate,
 				"$lt":  endDate,

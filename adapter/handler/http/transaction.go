@@ -38,7 +38,7 @@ func (th *TransactionHandler) GetTransactionsByUserId(ctx *gin.Context) {
 		return
 	}
 
-	transactions, totalDocuments, totalPages, err := th.service.GetTransactions(ctx, req.Page, req.Limit)
+	transactions, totalDocuments, totalPages, err := th.service.GetTransactionsByUserId(ctx, req.Page, req.Limit, req.UserId)
 	if err != nil {
 		dto.HandleError(ctx, err)
 		return
@@ -73,7 +73,7 @@ func (th *TransactionHandler) GetTransactionsByDate(ctx *gin.Context) {
 		return
 	}
 
-	transactions, totalDocuments, totalPages, err := th.service.GetTransactionsByDate(ctx, req.Page, req.Limit, req.Year, req.Month)
+	transactions, totalDocuments, totalPages, err := th.service.GetTransactionsByDate(ctx, req.UserId, req.Page, req.Limit, req.Year, req.Month)
 	if err != nil {
 		dto.HandleError(ctx, err)
 		return
@@ -131,6 +131,7 @@ func (th *TransactionHandler) CreateTransaction(ctx *gin.Context) {
 
 	transaction := domain.Transaction{
 		Amount:           req.Amount,
+		UserId:           req.UserId,
 		Type:             req.Type,
 		Subject:          req.Subject,
 		PersonOrBusiness: req.PersonOrBusiness,
@@ -168,6 +169,7 @@ func (th *TransactionHandler) UpdateTransaction(ctx *gin.Context) {
 
 	transaction := domain.Transaction{
 		Amount:           req.Amount,
+		UserId:           req.UserId,
 		Type:             req.Type,
 		Subject:          req.Subject,
 		PersonOrBusiness: req.PersonOrBusiness,

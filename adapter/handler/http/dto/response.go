@@ -11,6 +11,7 @@ import (
 
 type TransactionResponse struct {
 	ID               any       `json:"_id"`
+	UserId           string    `json:"user_id"`
 	Amount           float64   `json:"amount"`
 	Type             string    `json:"type"`
 	Subject          string    `json:"subject"`
@@ -61,6 +62,7 @@ func NewTransactionResponse(transaction *domain.Transaction) TransactionResponse
 
 	return TransactionResponse{
 		ID:               transaction.ID,
+		UserId:           transaction.UserId,
 		Amount:           transaction.Amount,
 		Type:             transaction.Type,
 		Subject:          transaction.Subject,
