@@ -26,6 +26,10 @@ type RegisterRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type UserRequest struct {
+	Email string `form:"email" binding:"required"`
+}
+
 type TokenResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`

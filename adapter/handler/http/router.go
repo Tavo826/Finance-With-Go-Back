@@ -49,6 +49,7 @@ func NewRouter(
 
 		auth := v1.Group("/users")
 		{
+			auth.GET("/", authHandler.GetUserByEmail)
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 		}

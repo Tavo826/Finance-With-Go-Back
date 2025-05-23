@@ -133,6 +133,27 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 	dto.HandleSuccess(ctx, tokenResponse)
 }
 
+func (ah *AuthHandler) GetUserByEmail(ctx *gin.Context) {
+	var request dto.UserRequest
+
+	log.Println("Handler")
+
+	if err := ctx.Bind(&request); err != nil {
+		dto.ValidationError(ctx, err)
+		return
+	}
+
+	user, err := ah.service.GetUserByEmail(ctx, request.Email)
+	if err != nil {
+		dto.HandleError(ctx, err)
+		return
+	}
+
+	response := dto.NewUserResponse(user)
+
+	dto.HandleSuccess(ctx, response)
+}
+
 func generateToken(user *domain.User, jwtSecret []byte) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
