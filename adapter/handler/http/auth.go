@@ -58,7 +58,6 @@ func (ah *AuthHandler) Register(ctx *gin.Context) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Error hashed password")
 		dto.HandleError(ctx, domain.ErrInvalidToken)
 		return
 	}
@@ -133,17 +132,15 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 	dto.HandleSuccess(ctx, tokenResponse)
 }
 
-func (ah *AuthHandler) GetUserByEmail(ctx *gin.Context) {
+func (ah *AuthHandler) GetUserById(ctx *gin.Context) {
 	var request dto.UserRequest
-
-	log.Println("Handler")
 
 	if err := ctx.Bind(&request); err != nil {
 		dto.ValidationError(ctx, err)
 		return
 	}
 
-	user, err := ah.service.GetUserByEmail(ctx, request.Email)
+	user, err := ah.service.GetUserById(ctx, request.ID)
 	if err != nil {
 		dto.HandleError(ctx, err)
 		return
@@ -154,13 +151,55 @@ func (ah *AuthHandler) GetUserByEmail(ctx *gin.Context) {
 	dto.HandleSuccess(ctx, response)
 }
 
+func (ah *AuthHandler) UpdateUser(ctx *gin.Context) {
+
+	var req dto.User
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		dto.ValidationError(ctx, err)
+		return
+	}
+
+	if err := ah.validate.Struct(req); err != nil {
+		dto.ValidationError(ctx, err)
+		return
+	}
+
+	id := ctx.Param("id")
+
+	actualUser, err := ah.service.GetUserById(ctx, id)
+	if err != nil {
+		dto.HandleError(ctx, err)
+		return
+	}
+
+	user := domain.User{
+		Username:  req.Username,
+		Email:     req.Email,
+		Password:  actualUser.Password,
+		Role:      actualUser.Role,
+		CreatedAt: actualUser.CreatedAt,
+		UpdatedAt: time.Now(),
+	}
+
+	_, err = ah.service.UpdateUser(ctx, id, &user)
+	if err != nil {
+		dto.HandleError(ctx, err)
+		return
+	}
+
+	response := dto.NewUserResponse(&user)
+
+	dto.HandleSuccess(ctx, response)
+}
+
 func generateToken(user *domain.User, jwtSecret []byte) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.ID,
-		"email": user.Email,
-		"role":  user.Role,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+		"id":       user.ID,
+		"email":    user.Email,
+		"username": user.Username,
+		"role":     user.Role,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	})
 
 	tokenString, err := token.SignedString(jwtSecret)

@@ -17,12 +17,41 @@ func NewAuthService(repo port.AuthRepository) *AuthService {
 	}
 }
 
+func (as *AuthService) GetUserById(ctx context.Context, id string) (*domain.User, error) {
+
+	user, err := as.repo.GetUserById(ctx, id)
+	if err != nil {
+		if err == domain.ErrDataNotFound {
+			return nil, err
+		}
+		return nil, domain.ErrInternal
+	}
+
+	return user, nil
+}
+
 func (as *AuthService) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
 
 	user, err := as.repo.CreateUser(ctx, user)
 	if err != nil {
 		if err == domain.ErrConflictingData {
 			return nil, err
+		}
+		return nil, domain.ErrInternal
+	}
+
+	return user, nil
+}
+
+func (as *AuthService) UpdateUser(ctx context.Context, id string, user *domain.User) (*domain.User, error) {
+
+	_, err := as.repo.UpdateUser(ctx, id, user)
+	if err != nil {
+		if err == domain.ErrConflictingData {
+			return nil, err
+		}
+		if err == domain.ErrDataNotFound {
+			return nil, domain.ErrDataNotFound
 		}
 		return nil, domain.ErrInternal
 	}

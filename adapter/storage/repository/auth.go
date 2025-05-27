@@ -20,6 +20,21 @@ func NewAuthRepository(db *mongo.Database, config *config.DB) *AuthRepository {
 	}
 }
 
+func (ar *AuthRepository) GetUserById(ctx context.Context, id string) (*domain.User, error) {
+
+	var user domain.User
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ar.db.FindOne(ctx, bson.M{"_id": objectId}).Decode(&user); err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (ar *AuthRepository) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
 
 	result, err := ar.db.InsertOne(ctx, user)
@@ -31,6 +46,29 @@ func (ar *AuthRepository) CreateUser(ctx context.Context, user *domain.User) (*d
 	user.ID = result.InsertedID.(primitive.ObjectID).Hex()
 
 	return user, nil
+}
+
+func (ar *AuthRepository) UpdateUser(ctx context.Context, id string, updatedUser *domain.User) (*domain.User, error) {
+
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	update := bson.M{"$set": updatedUser}
+
+	result, err := ar.db.UpdateOne(ctx, bson.M{"_id": objectId}, update)
+	if err != nil {
+		return nil, err
+	}
+
+	if result.MatchedCount == 0 {
+		return nil, domain.ErrDataNotFound
+	}
+
+	updatedUser.ID = id
+
+	return updatedUser, nil
 }
 
 func (ar *AuthRepository) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {

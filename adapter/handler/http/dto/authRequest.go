@@ -27,7 +27,7 @@ type RegisterRequest struct {
 }
 
 type UserRequest struct {
-	Email string `form:"email" binding:"required"`
+	ID string `form:"id" binding:"required"`
 }
 
 type TokenResponse struct {

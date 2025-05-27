@@ -49,9 +49,13 @@ func NewRouter(
 
 		auth := v1.Group("/users")
 		{
-			auth.GET("/", authHandler.GetUserByEmail)
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
+		}
+		auth.Use(middleware.Implement(config.Token))
+		{
+			auth.GET("/", authHandler.GetUserById)
+			auth.PUT("/:id", authHandler.UpdateUser)
 		}
 
 		transaction := v1.Group("/transactions")
