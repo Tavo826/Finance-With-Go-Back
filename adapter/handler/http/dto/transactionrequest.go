@@ -14,6 +14,12 @@ type DateFilterRequest struct {
 	Year  int `form:"year" binding:"required"`
 }
 
+type SubjectFilterRequest struct {
+	*TransactionByUserRequest
+	Subject          string `form:"subject" binding:"required"`
+	PersonOrBusiness string `form:"person_business"`
+}
+
 type IdRequest struct {
 	ID string `uri:"id" binding:"required"`
 }

@@ -22,44 +22,17 @@ func NewTransactionRepository(db *mongo.Database, config *config.DB) *Transactio
 	}
 }
 
-func (tr *TransactionRepository) GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, any, any, error) {
-
-	var transactions []domain.Transaction
+func (tr *TransactionRepository) GetTransactionsByUserId(
+	ctx context.Context,
+	page, limit uint64,
+	userId string,
+) ([]domain.Transaction, any, any, error) {
 
 	filter := bson.M{
 		"user_id": userId,
 	}
-	total, err := tr.db.CountDocuments(ctx, filter)
 
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	offset := int64((page - 1) * limit)
-
-	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
-	findOptions.SetSkip(offset)
-	findOptions.SetLimit(int64(limit))
-
-	cursor, err := tr.db.Find(ctx, filter, findOptions)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	defer cursor.Close(ctx)
-
-	for cursor.Next(ctx) {
-		var transaction domain.Transaction
-		if err := cursor.Decode(&transaction); err != nil {
-			return nil, nil, nil, err
-		}
-		transactions = append(transactions, transaction)
-	}
-
-	totalPages := int((total + int64(limit) - 1) / int64(limit))
-
-	return transactions, total, totalPages, nil
+	return tr.findTransactionsUsinFilter(ctx, filter, page, limit)
 }
 
 func (tr *TransactionRepository) GetTransactionsByDate(
@@ -70,7 +43,6 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 	month int,
 ) ([]domain.Transaction, any, any, error) {
 
-	var transactions []domain.Transaction
 	var filter bson.M
 
 	if month == 0 {
@@ -99,36 +71,35 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 		}
 	}
 
-	total, err := tr.db.CountDocuments(ctx, filter)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	return tr.findTransactionsUsinFilter(ctx, filter, page, limit)
+}
 
-	offset := int64((page - 1) * limit)
+func (tr *TransactionRepository) GetTransactionsBySubject(
+	ctx context.Context,
+	userId string,
+	page, limit uint64,
+	subject string,
+	personOrBusiness string,
+) ([]domain.Transaction, any, any, error) {
 
-	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
-	findOptions.SetSkip(offset)
-	findOptions.SetLimit(int64(limit))
+	var filter bson.M
 
-	cursor, err := tr.db.Find(ctx, filter, findOptions)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	if personOrBusiness == "" {
 
-	defer cursor.Close(ctx)
-
-	for cursor.Next(ctx) {
-		var transaction domain.Transaction
-		if err := cursor.Decode(&transaction); err != nil {
-			return nil, nil, nil, err
+		filter = bson.M{
+			"user_id": userId,
+			"subject": subject,
 		}
-		transactions = append(transactions, transaction)
+	} else {
+
+		filter = bson.M{
+			"user_id":         userId,
+			"subject":         subject,
+			"person_business": personOrBusiness,
+		}
 	}
 
-	totalPages := int((total + int64(limit) - 1) / int64(limit))
-
-	return transactions, total, totalPages, nil
+	return tr.findTransactionsUsinFilter(ctx, filter, page, limit)
 }
 
 func (tr *TransactionRepository) GetTransaction(ctx context.Context, id string) (*domain.Transaction, error) {
@@ -203,4 +174,40 @@ func (tr *TransactionRepository) DeleteTransaction(ctx context.Context, id strin
 	}
 
 	return nil
+}
+
+func (tr *TransactionRepository) findTransactionsUsinFilter(ctx context.Context, filter bson.M, page uint64, limit uint64) ([]domain.Transaction, any, any, error) {
+
+	var transactions []domain.Transaction
+
+	total, err := tr.db.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	offset := int64((page - 1) * limit)
+
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
+	findOptions.SetSkip(offset)
+	findOptions.SetLimit(int64(limit))
+
+	cursor, err := tr.db.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var transaction domain.Transaction
+		if err := cursor.Decode(&transaction); err != nil {
+			return nil, nil, nil, err
+		}
+		transactions = append(transactions, transaction)
+	}
+
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
+
+	return transactions, total, totalPages, nil
 }

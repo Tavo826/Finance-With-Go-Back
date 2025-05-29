@@ -98,6 +98,41 @@ func (th *TransactionHandler) GetTransactionsByDate(ctx *gin.Context) {
 	dto.HandleSuccess(ctx, response)
 }
 
+func (th *TransactionHandler) GetTransactionsBySubject(ctx *gin.Context) {
+
+	var req dto.SubjectFilterRequest
+	var transactionList []dto.TransactionResponse
+
+	if err := ctx.Bind(&req); err != nil {
+		dto.ValidationError(ctx, err)
+		return
+	}
+
+	transactions, totalDocuments, totalPages, err := th.service.GetTransactionsBySubject(ctx, req.UserId, req.Page, req.Limit, req.Subject, req.PersonOrBusiness)
+	if err != nil {
+		dto.HandleError(ctx, err)
+		return
+	}
+
+	for _, transaction := range transactions {
+		transactionList = append(transactionList, dto.NewTransactionResponse(&transaction))
+	}
+
+	if transactionList == nil {
+		transactionList = []dto.TransactionResponse{}
+	}
+
+	response := dto.NewPaginatedResponse(
+		req.Page,
+		req.Limit,
+		totalDocuments.(int64),
+		totalPages.(int),
+		transactionList,
+	)
+
+	dto.HandleSuccess(ctx, response)
+}
+
 func (th *TransactionHandler) GetTransaction(ctx *gin.Context) {
 	var request dto.IdRequest
 	if err := ctx.ShouldBindUri(&request); err != nil {

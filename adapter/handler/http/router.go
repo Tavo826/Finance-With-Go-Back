@@ -62,7 +62,8 @@ func NewRouter(
 		transaction.Use(middleware.Implement(config.Token))
 		{
 			transaction.GET("/", transactionHandler.GetTransactionsByUserId)
-			transaction.GET("/filter", transactionHandler.GetTransactionsByDate)
+			transaction.GET("/filter_date", transactionHandler.GetTransactionsByDate)
+			transaction.GET("/filter_subject", transactionHandler.GetTransactionsBySubject)
 			transaction.GET("/:id", transactionHandler.GetTransaction)
 			transaction.POST("/", transactionHandler.CreateTransaction)
 			transaction.PUT("/:id", transactionHandler.UpdateTransaction)
