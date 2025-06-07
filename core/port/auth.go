@@ -2,6 +2,7 @@ package port
 
 import (
 	"context"
+	"mime/multipart"
 	"personal-finance/core/domain"
 )
 
@@ -10,6 +11,7 @@ type AuthRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
 	CreateUser(ctx context.Context, createUser *domain.User) (*domain.User, error)
 	UpdateUser(ctx context.Context, id string, updateUser *domain.User) (*domain.User, error)
+	DeleteUser(ctx context.Context, id string) error
 }
 
 type AuthService interface {
@@ -18,4 +20,7 @@ type AuthService interface {
 	VerifyUserEmail(ctx context.Context, email string) (bool, error)
 	CreateUser(ctx context.Context, createUser *domain.User) (*domain.User, error)
 	UpdateUser(ctx context.Context, id string, updateUser *domain.User) (*domain.User, error)
+	UpdateUserProfileImage(ctx context.Context, file multipart.File, userId string) (string, error)
+	DeleteUser(ctx context.Context, id string) error
+	DeleteTransactionsByUserId(ctx context.Context, id string) error
 }

@@ -1,10 +1,9 @@
-package storage
+package db
 
 import (
 	"context"
 	"log/slog"
 	"personal-finance/adapter/config"
-	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -25,8 +24,6 @@ func New(ctx context.Context, config *config.DB) (*mongo.Database, error) {
 		slog.Error("error in database communication", "error", err)
 		return nil, err
 	}
-
-	ctx, _ = context.WithTimeout(ctx, 10*time.Second)
 
 	return client.Database(config.Database), nil
 }

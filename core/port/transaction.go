@@ -13,6 +13,7 @@ type TransactionRepository interface {
 	CreateTransaction(ctx context.Context, createTransaction *domain.Transaction) (*domain.Transaction, error)
 	UpdateTransaction(ctx context.Context, id string, updatedTransaction *domain.Transaction) (*domain.Transaction, error)
 	DeleteTransaction(ctx context.Context, id string) error
+	DeleteTransactionsByUserId(ctx context.Context, id string) error
 }
 
 type TransactionService interface {

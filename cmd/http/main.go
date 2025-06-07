@@ -8,8 +8,10 @@ import (
 
 	"personal-finance/adapter/config"
 	"personal-finance/adapter/handler/http"
-	"personal-finance/adapter/storage"
-	"personal-finance/adapter/storage/repository"
+	"personal-finance/adapter/storage/cloud"
+	"personal-finance/adapter/storage/cloud/adapter"
+	"personal-finance/adapter/storage/db"
+	"personal-finance/adapter/storage/db/repository"
 	"personal-finance/core/service"
 
 	"github.com/gin-gonic/gin"
@@ -27,9 +29,16 @@ func main() {
 	slog.Info("Starting the application", "app", config.App.Name, "env", config.App.Env)
 
 	ctx := context.Background()
-	db, err := storage.New(ctx, config.DB)
+
+	db, err := db.New(ctx, config.DB)
 	if err != nil {
 		slog.Error("Error connecting to database", "error", err)
+		os.Exit(1)
+	}
+
+	storage, err := cloud.New(ctx, config.ImageCloud)
+	if err != nil {
+		slog.Error("Error connecting to storage service", "error", err)
 		os.Exit(1)
 	}
 
@@ -44,7 +53,8 @@ func main() {
 	transactionHandler := http.NewTransactionHandler(transactionService, validate)
 
 	authRepo := repository.NewAuthRepository(db, config.DB)
-	authService := service.NewAuthService(authRepo)
+	imageAdapter := adapter.NewImageAdapter(storage)
+	authService := service.NewAuthService(authRepo, transactionRepo, imageAdapter)
 	authHandler := http.NewAuthHandler(authService, validate, config.Token)
 
 	router, err := http.NewRouter(config, *transactionHandler, *authHandler)

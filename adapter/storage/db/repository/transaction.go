@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 	"personal-finance/adapter/config"
 	"personal-finance/core/domain"
 	"time"
@@ -32,7 +33,7 @@ func (tr *TransactionRepository) GetTransactionsByUserId(
 		"user_id": userId,
 	}
 
-	return tr.findTransactionsUsinFilter(ctx, filter, page, limit)
+	return tr.findTransactionsUsingFilter(ctx, filter, page, limit)
 }
 
 func (tr *TransactionRepository) GetTransactionsByDate(
@@ -71,7 +72,7 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 		}
 	}
 
-	return tr.findTransactionsUsinFilter(ctx, filter, page, limit)
+	return tr.findTransactionsUsingFilter(ctx, filter, page, limit)
 }
 
 func (tr *TransactionRepository) GetTransactionsBySubject(
@@ -99,7 +100,7 @@ func (tr *TransactionRepository) GetTransactionsBySubject(
 		}
 	}
 
-	return tr.findTransactionsUsinFilter(ctx, filter, page, limit)
+	return tr.findTransactionsUsingFilter(ctx, filter, page, limit)
 }
 
 func (tr *TransactionRepository) GetTransaction(ctx context.Context, id string) (*domain.Transaction, error) {
@@ -176,7 +177,18 @@ func (tr *TransactionRepository) DeleteTransaction(ctx context.Context, id strin
 	return nil
 }
 
-func (tr *TransactionRepository) findTransactionsUsinFilter(ctx context.Context, filter bson.M, page uint64, limit uint64) ([]domain.Transaction, any, any, error) {
+func (tr *TransactionRepository) DeleteTransactionsByUserId(ctx context.Context, id string) error {
+
+	_, err := tr.db.DeleteMany(ctx, bson.M{"user_id": id})
+	if err != nil {
+		log.Println("ERROR: ", err)
+		return err
+	}
+
+	return nil
+}
+
+func (tr *TransactionRepository) findTransactionsUsingFilter(ctx context.Context, filter bson.M, page uint64, limit uint64) ([]domain.Transaction, any, any, error) {
 
 	var transactions []domain.Transaction
 

@@ -6,13 +6,14 @@ import (
 )
 
 type User struct {
-	ID        string    `json:"_id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Password  string    `json:"-"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	ID           string    `json:"_id"`
+	Username     string    `json:"username"`
+	Email        string    `json:"email"`
+	Password     string    `json:"-"`
+	Role         string    `json:"role"`
+	ProfileImage string    `json:"profile_image,omitempty"`
+	CreatedAt    time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" bson:"updated_at"`
 }
 
 type LoginRequest struct {
@@ -38,11 +39,12 @@ type TokenResponse struct {
 func NewUserResponse(user *domain.User) User {
 
 	return User{
-		ID:        user.ID,
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
+		ID:           user.ID,
+		Username:     user.Username,
+		Email:        user.Email,
+		Role:         user.Role,
+		ProfileImage: user.ProfileImage,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
 	}
 }

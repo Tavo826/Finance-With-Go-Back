@@ -8,9 +8,10 @@ import (
 
 type (
 	Container struct {
-		App   *App
-		DB    *DB
-		Token *Token
+		App        *App
+		DB         *DB
+		ImageCloud *ImageCloud
+		Token      *Token
 	}
 
 	App struct {
@@ -25,6 +26,10 @@ type (
 		Database     string
 		Transactions string
 		Users        string
+	}
+
+	ImageCloud struct {
+		Connection string
 	}
 
 	Token struct {
@@ -55,6 +60,10 @@ func New() (*Container, error) {
 		Users:        os.Getenv("MONGO_COLLECTION_USER"),
 	}
 
+	imageCloud := &ImageCloud{
+		Connection: os.Getenv("CLOUDINARY_URL"),
+	}
+
 	token := &Token{
 		JwtSecret: os.Getenv("JWT_SECRET"),
 	}
@@ -62,6 +71,7 @@ func New() (*Container, error) {
 	return &Container{
 		app,
 		db,
+		imageCloud,
 		token,
 	}, nil
 }

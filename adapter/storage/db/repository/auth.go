@@ -81,3 +81,24 @@ func (ar *AuthRepository) GetUserByEmail(ctx context.Context, email string) (*do
 
 	return &user, nil
 }
+
+func (ar *AuthRepository) DeleteUser(ctx context.Context, id string) error {
+
+	objectId, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+		return err
+	}
+
+	result, err := ar.db.DeleteOne(ctx, bson.M{"_id": objectId})
+
+	if err != nil {
+		return err
+	}
+
+	if result.DeletedCount == 0 {
+		return domain.ErrDataNotFound
+	}
+
+	return nil
+}

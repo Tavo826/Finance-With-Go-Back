@@ -56,6 +56,7 @@ func NewRouter(
 		{
 			auth.GET("/", authHandler.GetUserById)
 			auth.PUT("/:id", authHandler.UpdateUser)
+			auth.DELETE("/:id", authHandler.DeleteUser)
 		}
 
 		transaction := v1.Group("/transactions")

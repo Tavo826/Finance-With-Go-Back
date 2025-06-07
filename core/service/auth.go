@@ -3,23 +3,28 @@ package service
 import (
 	"context"
 	"log"
+	"mime/multipart"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
 )
 
 type AuthService struct {
-	repo port.AuthRepository
+	authRepo        port.AuthRepository
+	transactionRepo port.TransactionRepository
+	adapter         port.ImageAdapter
 }
 
-func NewAuthService(repo port.AuthRepository) *AuthService {
+func NewAuthService(authRepo port.AuthRepository, transactionRepo port.TransactionRepository, adapter port.ImageAdapter) *AuthService {
 	return &AuthService{
-		repo,
+		authRepo,
+		transactionRepo,
+		adapter,
 	}
 }
 
 func (as *AuthService) GetUserById(ctx context.Context, id string) (*domain.User, error) {
 
-	user, err := as.repo.GetUserById(ctx, id)
+	user, err := as.authRepo.GetUserById(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
 			return nil, err
@@ -32,7 +37,7 @@ func (as *AuthService) GetUserById(ctx context.Context, id string) (*domain.User
 
 func (as *AuthService) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
 
-	user, err := as.repo.CreateUser(ctx, user)
+	user, err := as.authRepo.CreateUser(ctx, user)
 	if err != nil {
 		if err == domain.ErrConflictingData {
 			return nil, err
@@ -45,7 +50,7 @@ func (as *AuthService) CreateUser(ctx context.Context, user *domain.User) (*doma
 
 func (as *AuthService) UpdateUser(ctx context.Context, id string, user *domain.User) (*domain.User, error) {
 
-	_, err := as.repo.UpdateUser(ctx, id, user)
+	_, err := as.authRepo.UpdateUser(ctx, id, user)
 	if err != nil {
 		if err == domain.ErrConflictingData {
 			return nil, err
@@ -59,9 +64,19 @@ func (as *AuthService) UpdateUser(ctx context.Context, id string, user *domain.U
 	return user, nil
 }
 
+func (as *AuthService) UpdateUserProfileImage(ctx context.Context, file multipart.File, userId string) (string, error) {
+
+	imageUrl, err := as.adapter.UploadImageFromFile(ctx, file, userId)
+	if err != nil {
+		return "", err
+	}
+
+	return imageUrl, nil
+}
+
 func (as *AuthService) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
 
-	user, err := as.repo.GetUserByEmail(ctx, email)
+	user, err := as.authRepo.GetUserByEmail(ctx, email)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
 			return nil, err
@@ -74,7 +89,7 @@ func (as *AuthService) GetUserByEmail(ctx context.Context, email string) (*domai
 
 func (as *AuthService) VerifyUserEmail(ctx context.Context, email string) (bool, error) {
 
-	_, err := as.repo.GetUserByEmail(ctx, email)
+	_, err := as.authRepo.GetUserByEmail(ctx, email)
 
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -88,4 +103,14 @@ func (as *AuthService) VerifyUserEmail(ctx context.Context, email string) (bool,
 	}
 
 	return true, nil
+}
+
+func (as *AuthService) DeleteUser(ctx context.Context, id string) error {
+
+	return as.authRepo.DeleteUser(ctx, id)
+}
+
+func (as *AuthService) DeleteTransactionsByUserId(ctx context.Context, id string) error {
+
+	return as.transactionRepo.DeleteTransactionsByUserId(ctx, id)
 }
