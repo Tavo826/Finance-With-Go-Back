@@ -12,6 +12,7 @@ type User struct {
 	Password     string    `json:"-"`
 	Role         string    `json:"role"`
 	ProfileImage string    `json:"profile_image,omitempty"`
+	PublicId     string    `json:"public_id,omitempty"`
 	CreatedAt    time.Time `json:"created_at" bson:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" bson:"updated_at"`
 }
@@ -44,6 +45,7 @@ func NewUserResponse(user *domain.User) User {
 		Email:        user.Email,
 		Role:         user.Role,
 		ProfileImage: user.ProfileImage,
+		PublicId:     user.PublicIdImage,
 		CreatedAt:    user.CreatedAt,
 		UpdatedAt:    user.UpdatedAt,
 	}

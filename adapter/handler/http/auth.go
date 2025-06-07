@@ -137,6 +137,8 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 func (ah *AuthHandler) GetUserById(ctx *gin.Context) {
 	var request dto.UserRequest
 
+	log.Println("Handler getting user")
+
 	if err := ctx.Bind(&request); err != nil {
 		dto.ValidationError(ctx, err)
 		return
@@ -155,7 +157,8 @@ func (ah *AuthHandler) GetUserById(ctx *gin.Context) {
 
 func (ah *AuthHandler) UpdateUser(ctx *gin.Context) {
 
-	var profileImagePath string
+	log.Println("Update request: ", ctx.Request)
+
 	const MaxImageSize = 5 << 20
 	id := ctx.Param("id")
 
@@ -169,27 +172,41 @@ func (ah *AuthHandler) UpdateUser(ctx *gin.Context) {
 		dto.HandleError(ctx, domain.ErrGettingFile)
 		return
 	}
-	defer file.Close()
-
-	if header != nil && header.Size > MaxImageSize {
-		dto.HandleError(ctx, domain.ErrFileSize)
-		return
-	}
-
-	contentType := header.Header.Get("Content-Type")
-	if !isValidImageType(contentType) {
-		dto.HandleError(ctx, domain.ErrFileType)
-		return
-	}
-
-	profileImagePath, err = ah.service.UpdateUserProfileImage(ctx, file, id)
-	if err != nil {
-		dto.HandleError(ctx, err)
-		return
-	}
 
 	username := ctx.PostForm("username")
 	email := ctx.PostForm("email")
+
+	user := domain.User{
+		Username:  username,
+		Email:     email,
+		UpdatedAt: time.Now(),
+	}
+
+	var uploadedImage *domain.Image
+
+	if file != nil {
+		defer file.Close()
+
+		if header != nil && header.Size > MaxImageSize {
+			dto.HandleError(ctx, domain.ErrFileSize)
+			return
+		}
+
+		contentType := header.Header.Get("Content-Type")
+		if !isValidImageType(contentType) {
+			dto.HandleError(ctx, domain.ErrFileType)
+			return
+		}
+
+		uploadedImage, err = ah.service.UpdateUserProfileImage(ctx, file, id)
+		if err != nil {
+			dto.HandleError(ctx, err)
+			return
+		}
+
+		user.ProfileImage = uploadedImage.SecureUrl
+		user.PublicIdImage = uploadedImage.PublicId
+	}
 
 	actualUser, err := ah.service.GetUserById(ctx, id)
 	if err != nil {
@@ -197,15 +214,9 @@ func (ah *AuthHandler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	user := domain.User{
-		Username:     username,
-		Email:        email,
-		Password:     actualUser.Password,
-		Role:         actualUser.Role,
-		ProfileImage: profileImagePath,
-		CreatedAt:    actualUser.CreatedAt,
-		UpdatedAt:    time.Now(),
-	}
+	user.Password = actualUser.Password
+	user.Role = actualUser.Role
+	user.CreatedAt = actualUser.CreatedAt
 
 	_, err = ah.service.UpdateUser(ctx, id, &user)
 	if err != nil {
@@ -233,7 +244,6 @@ func (ah *AuthHandler) DeleteUser(ctx *gin.Context) {
 
 	err = ah.service.DeleteTransactionsByUserId(ctx, request.ID)
 	if err != nil {
-		log.Println("ERROR Service: ", err)
 		dto.HandleError(ctx, err)
 		return
 	}

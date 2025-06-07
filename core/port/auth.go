@@ -20,7 +20,8 @@ type AuthService interface {
 	VerifyUserEmail(ctx context.Context, email string) (bool, error)
 	CreateUser(ctx context.Context, createUser *domain.User) (*domain.User, error)
 	UpdateUser(ctx context.Context, id string, updateUser *domain.User) (*domain.User, error)
-	UpdateUserProfileImage(ctx context.Context, file multipart.File, userId string) (string, error)
+	UpdateUserProfileImage(ctx context.Context, file multipart.File, userId string) (*domain.Image, error)
+	DeleteUserProfileImage(ctx context.Context, publicId string) error
 	DeleteUser(ctx context.Context, id string) error
 	DeleteTransactionsByUserId(ctx context.Context, id string) error
 }

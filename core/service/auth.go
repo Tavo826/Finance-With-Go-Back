@@ -29,6 +29,9 @@ func (as *AuthService) GetUserById(ctx context.Context, id string) (*domain.User
 		if err == domain.ErrDataNotFound {
 			return nil, err
 		}
+		if err.Error() == domain.ErrNoDocuments.Error() {
+			return nil, domain.ErrDataNotFound
+		}
 		return nil, domain.ErrInternal
 	}
 
@@ -64,14 +67,19 @@ func (as *AuthService) UpdateUser(ctx context.Context, id string, user *domain.U
 	return user, nil
 }
 
-func (as *AuthService) UpdateUserProfileImage(ctx context.Context, file multipart.File, userId string) (string, error) {
+func (as *AuthService) UpdateUserProfileImage(ctx context.Context, file multipart.File, userId string) (*domain.Image, error) {
 
-	imageUrl, err := as.adapter.UploadImageFromFile(ctx, file, userId)
+	uploadedImage, err := as.adapter.UploadImageFromFile(ctx, file, userId)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return imageUrl, nil
+	return uploadedImage, nil
+}
+
+func (as *AuthService) DeleteUserProfileImage(ctx context.Context, publicId string) error {
+
+	return as.adapter.DeleteImage(ctx, publicId)
 }
 
 func (as *AuthService) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
