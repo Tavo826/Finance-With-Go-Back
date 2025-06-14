@@ -64,9 +64,9 @@ func (ts *TransactionService) GetTransactionsBySubject(
 	return transactions, totalDocuments, totalPages, nil
 }
 
-func (ts *TransactionService) GetTransaction(ctx context.Context, id string) (*domain.Transaction, error) {
+func (ts *TransactionService) GetTransactionById(ctx context.Context, id string) (*domain.Transaction, error) {
 
-	transaction, err := ts.repo.GetTransaction(ctx, id)
+	transaction, err := ts.repo.GetTransactionById(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
 			return nil, err

@@ -133,14 +133,14 @@ func (th *TransactionHandler) GetTransactionsBySubject(ctx *gin.Context) {
 	dto.HandleSuccess(ctx, response)
 }
 
-func (th *TransactionHandler) GetTransaction(ctx *gin.Context) {
+func (th *TransactionHandler) GetTransactionById(ctx *gin.Context) {
 	var request dto.IdRequest
 	if err := ctx.ShouldBindUri(&request); err != nil {
 		dto.ValidationError(ctx, err)
 		return
 	}
 
-	transaction, err := th.service.GetTransaction(ctx, request.ID)
+	transaction, err := th.service.GetTransactionById(ctx, request.ID)
 	if err != nil {
 		dto.HandleError(ctx, err)
 		return

@@ -18,6 +18,7 @@ func NewRouter(
 	config *config.Container,
 	transactionHandler TransactionHandler,
 	authHandler AuthHandler,
+	originHandler OriginHandler,
 ) (*Router, error) {
 
 	if config.App.Env == "production" {
@@ -65,10 +66,20 @@ func NewRouter(
 			transaction.GET("/", transactionHandler.GetTransactionsByUserId)
 			transaction.GET("/filter_date", transactionHandler.GetTransactionsByDate)
 			transaction.GET("/filter_subject", transactionHandler.GetTransactionsBySubject)
-			transaction.GET("/:id", transactionHandler.GetTransaction)
+			transaction.GET("/:id", transactionHandler.GetTransactionById)
 			transaction.POST("/", transactionHandler.CreateTransaction)
 			transaction.PUT("/:id", transactionHandler.UpdateTransaction)
 			transaction.DELETE("/:id", transactionHandler.DeleteTransaction)
+		}
+
+		origin := v1.Group("/origins")
+		origin.Use(middleware.Implement(config.Token))
+		{
+			origin.GET("/", originHandler.GetOriginsByUserId)
+			origin.GET("/:id", originHandler.GetOriginById)
+			origin.POST("/", originHandler.CreateOrigin)
+			origin.PUT("/:id", originHandler.UpdateOrigin)
+			origin.DELETE("/:id", originHandler.DeleteOrigin)
 		}
 	}
 

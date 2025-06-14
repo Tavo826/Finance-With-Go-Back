@@ -25,6 +25,7 @@ type (
 		Connection   string
 		Database     string
 		Transactions string
+		Origin       string
 		Users        string
 	}
 
@@ -57,6 +58,7 @@ func New() (*Container, error) {
 		Connection:   os.Getenv("MONGO_CONNECTION_STRING"),
 		Database:     os.Getenv("MONGO_DATABASE_NAME"),
 		Transactions: os.Getenv("MONGO_COLLECTION_TRANSACTION"),
+		Origin:       os.Getenv("MONGO_COLLECTION_ORIGIN"),
 		Users:        os.Getenv("MONGO_COLLECTION_USER"),
 	}
 

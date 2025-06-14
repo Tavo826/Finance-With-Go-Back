@@ -103,7 +103,7 @@ func (tr *TransactionRepository) GetTransactionsBySubject(
 	return tr.findTransactionsUsingFilter(ctx, filter, page, limit)
 }
 
-func (tr *TransactionRepository) GetTransaction(ctx context.Context, id string) (*domain.Transaction, error) {
+func (tr *TransactionRepository) GetTransactionById(ctx context.Context, id string) (*domain.Transaction, error) {
 
 	var transaction domain.Transaction
 	objectId, err := primitive.ObjectIDFromHex(id)
