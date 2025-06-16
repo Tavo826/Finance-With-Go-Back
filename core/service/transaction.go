@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
 )
@@ -26,6 +27,7 @@ func (ts *TransactionService) GetTransactionsByUserId(ctx context.Context, page,
 
 	transactions, totalDocuments, totalPages, err := ts.repo.GetTransactionsByUserId(ctx, page, limit, userId)
 	if err != nil {
+		log.Println("Error service: ", err)
 		return nil, nil, nil, domain.ErrInternal
 	}
 

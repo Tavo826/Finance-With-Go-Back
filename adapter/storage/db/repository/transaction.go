@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type TransactionRepository struct {
@@ -29,11 +28,56 @@ func (tr *TransactionRepository) GetTransactionsByUserId(
 	userId string,
 ) ([]domain.Transaction, any, any, error) {
 
-	filter := bson.M{
-		"user_id": userId,
+	pipeline := mongo.Pipeline{
+
+		// Filter by usuario
+		{{Key: "$match", Value: bson.D{{Key: "user_id", Value: userId}}}},
+
+		// origin_id to ObjectId
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "origin_object_id", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$and", Value: bson.A{
+						bson.D{{Key: "$ifNull", Value: bson.A{"$origin_id", false}}},
+						bson.D{{Key: "$ne", Value: bson.A{"$origin_id", ""}}},
+					}}},
+					bson.D{{Key: "$toObjectId", Value: "$origin_id"}},
+					nil,
+				}},
+			}},
+		}}},
+
+		// Left join origins
+		{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "origins"},
+			{Key: "localField", Value: "origin_object_id"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "origin"},
+		}}},
+
+		// Array origin to object
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "origin", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$gt", Value: bson.A{bson.D{{Key: "$size", Value: "$origin"}}, 0}}},
+					bson.D{{Key: "$arrayElemAt", Value: bson.A{"$origin", 0}}},
+					nil,
+				}},
+			}},
+		}}},
+
+		// Clear temporal field
+		{{Key: "$unset", Value: "origin_object_id"}},
+
+		// Order by creation date DESC
+		{{Key: "$sort", Value: bson.D{{Key: "created_at", Value: -1}}}},
+
+		// Pagination
+		{{Key: "$skip", Value: int64((page - 1) * limit)}},
+		{{Key: "$limit", Value: int64(limit)}},
 	}
 
-	return tr.findTransactionsUsingFilter(ctx, filter, page, limit)
+	return tr.findtransactionUsingPipeline(ctx, pipeline, userId, limit)
 }
 
 func (tr *TransactionRepository) GetTransactionsByDate(
@@ -44,14 +88,14 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 	month int,
 ) ([]domain.Transaction, any, any, error) {
 
-	var filter bson.M
+	var dateFilter bson.M
 
 	if month == 0 {
 
 		startDate := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
 		endDate := time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)
 
-		filter = bson.M{
+		dateFilter = bson.M{
 			"user_id": userId,
 			"created_at": bson.M{
 				"$gte": startDate,
@@ -63,7 +107,7 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 		startDate := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 		endDate := startDate.AddDate(0, 1, 0)
 
-		filter = bson.M{
+		dateFilter = bson.M{
 			"user_id": userId,
 			"created_at": bson.M{
 				"$gte": startDate,
@@ -72,7 +116,56 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 		}
 	}
 
-	return tr.findTransactionsUsingFilter(ctx, filter, page, limit)
+	pipeline := mongo.Pipeline{
+
+		// Filter by user and date
+		{{Key: "$match", Value: dateFilter}},
+
+		// origin_id to ObjectId
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "origin_object_id", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$and", Value: bson.A{
+						bson.D{{Key: "$ifNull", Value: bson.A{"$origin_id", false}}},
+						bson.D{{Key: "$ne", Value: bson.A{"$origin_id", ""}}},
+					}}},
+					bson.D{{Key: "$toObjectId", Value: "$origin_id"}},
+					nil,
+				}},
+			}},
+		}}},
+
+		// Left join origins
+		{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "origins"},
+			{Key: "localField", Value: "origin_object_id"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "origin"},
+		}}},
+
+		// Array origin to object
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "origin", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$gt", Value: bson.A{bson.D{{Key: "$size", Value: "$origin"}}, 0}}},
+					bson.D{{Key: "$arrayElemAt", Value: bson.A{"$origin", 0}}},
+					nil,
+				}},
+			}},
+		}}},
+
+		// Clear temporal field
+		{{Key: "$unset", Value: "origin_object_id"}},
+
+		// Order by creation date DESC
+		{{Key: "$sort", Value: bson.D{{Key: "created_at", Value: -1}}}},
+
+		// Pagination
+		{{Key: "$skip", Value: int64((page - 1) * limit)}},
+		{{Key: "$limit", Value: int64(limit)}},
+	}
+
+	return tr.findtransactionUsingPipeline(ctx, pipeline, userId, limit)
 }
 
 func (tr *TransactionRepository) GetTransactionsBySubject(
@@ -83,40 +176,141 @@ func (tr *TransactionRepository) GetTransactionsBySubject(
 	personOrBusiness string,
 ) ([]domain.Transaction, any, any, error) {
 
-	var filter bson.M
+	var subjectFilter bson.M
 
 	if personOrBusiness == "" {
 
-		filter = bson.M{
+		subjectFilter = bson.M{
 			"user_id": userId,
 			"subject": subject,
 		}
 	} else {
 
-		filter = bson.M{
+		subjectFilter = bson.M{
 			"user_id":         userId,
 			"subject":         subject,
 			"person_business": personOrBusiness,
 		}
 	}
 
-	return tr.findTransactionsUsingFilter(ctx, filter, page, limit)
+	pipeline := mongo.Pipeline{
+
+		// Filter by user and date
+		{{Key: "$match", Value: subjectFilter}},
+
+		// origin_id to ObjectId
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "origin_object_id", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$and", Value: bson.A{
+						bson.D{{Key: "$ifNull", Value: bson.A{"$origin_id", false}}},
+						bson.D{{Key: "$ne", Value: bson.A{"$origin_id", ""}}},
+					}}},
+					bson.D{{Key: "$toObjectId", Value: "$origin_id"}},
+					nil,
+				}},
+			}},
+		}}},
+
+		// Left join origins
+		{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "origins"},
+			{Key: "localField", Value: "origin_object_id"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "origin"},
+		}}},
+
+		// Array origin to object
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "origin", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$gt", Value: bson.A{bson.D{{Key: "$size", Value: "$origin"}}, 0}}},
+					bson.D{{Key: "$arrayElemAt", Value: bson.A{"$origin", 0}}},
+					nil,
+				}},
+			}},
+		}}},
+
+		// Clear temporal field
+		{{Key: "$unset", Value: "origin_object_id"}},
+
+		// Order by creation date DESC
+		{{Key: "$sort", Value: bson.D{{Key: "created_at", Value: -1}}}},
+
+		// Pagination
+		{{Key: "$skip", Value: int64((page - 1) * limit)}},
+		{{Key: "$limit", Value: int64(limit)}},
+	}
+
+	return tr.findtransactionUsingPipeline(ctx, pipeline, userId, limit)
 }
 
 func (tr *TransactionRepository) GetTransactionById(ctx context.Context, id string) (*domain.Transaction, error) {
 
 	var transaction domain.Transaction
 	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println("Error id decode: ", err)
+		return nil, err
+	}
 
+	pipeline := mongo.Pipeline{
+
+		// Filter by id
+		{{Key: "$match", Value: bson.D{{Key: "_id", Value: objectId}}}},
+
+		// origin_id to ObjectId
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "origin_object_id", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$and", Value: bson.A{
+						bson.D{{Key: "$ifNull", Value: bson.A{"$origin_id", false}}},
+						bson.D{{Key: "$ne", Value: bson.A{"$origin_id", ""}}},
+					}}},
+					bson.D{{Key: "$toObjectId", Value: "$origin_id"}},
+					nil,
+				}},
+			}},
+		}}},
+
+		// Left join origins
+		{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "origins"},
+			{Key: "localField", Value: "origin_object_id"},
+			{Key: "foreignField", Value: "_id"},
+			{Key: "as", Value: "origin"},
+		}}},
+
+		// Array origin to object
+		{{Key: "$addFields", Value: bson.D{
+			{Key: "origin", Value: bson.D{
+				{Key: "$cond", Value: bson.A{
+					bson.D{{Key: "$gt", Value: bson.A{bson.D{{Key: "$size", Value: "$origin"}}, 0}}},
+					bson.D{{Key: "$arrayElemAt", Value: bson.A{"$origin", 0}}},
+					nil,
+				}},
+			}},
+		}}},
+
+		// Clear temporal field
+		{{Key: "$unset", Value: "origin_object_id"}},
+	}
+
+	cursor, err := tr.db.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := tr.db.FindOne(ctx, bson.M{"_id": objectId}).Decode(&transaction); err != nil {
-		return nil, err
+	defer cursor.Close(ctx)
+
+	if cursor.Next(ctx) {
+		if err := cursor.Decode(&transaction); err != nil {
+			return nil, err
+		}
+		return &transaction, nil
 	}
 
-	return &transaction, nil
+	return nil, domain.ErrDataNotFound
 }
 
 func (tr *TransactionRepository) CreateTransaction(ctx context.Context, transaction *domain.Transaction) (*domain.Transaction, error) {
@@ -188,23 +382,21 @@ func (tr *TransactionRepository) DeleteTransactionsByUserId(ctx context.Context,
 	return nil
 }
 
-func (tr *TransactionRepository) findTransactionsUsingFilter(ctx context.Context, filter bson.M, page uint64, limit uint64) ([]domain.Transaction, any, any, error) {
+func (tr *TransactionRepository) findtransactionUsingPipeline(
+	ctx context.Context,
+	pipeline mongo.Pipeline,
+	userId string,
+	limit uint64,
+) ([]domain.Transaction, any, any, error) {
 
 	var transactions []domain.Transaction
 
-	total, err := tr.db.CountDocuments(ctx, filter)
+	total, err := tr.db.CountDocuments(ctx, bson.M{"user_id": userId})
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	offset := int64((page - 1) * limit)
-
-	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{Key: "created_at", Value: -1}})
-	findOptions.SetSkip(offset)
-	findOptions.SetLimit(int64(limit))
-
-	cursor, err := tr.db.Find(ctx, filter, findOptions)
+	cursor, err := tr.db.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -217,6 +409,10 @@ func (tr *TransactionRepository) findTransactionsUsingFilter(ctx context.Context
 			return nil, nil, nil, err
 		}
 		transactions = append(transactions, transaction)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, nil, nil, err
 	}
 
 	totalPages := int((total + int64(limit) - 1) / int64(limit))

@@ -10,16 +10,17 @@ import (
 )
 
 type TransactionResponse struct {
-	ID               any       `json:"_id"`
-	UserId           string    `json:"user_id"`
-	Amount           float64   `json:"amount"`
-	Type             string    `json:"type"`
-	Subject          string    `json:"subject"`
-	PersonOrBusiness string    `json:"person_business"`
-	Description      string    `json:"description"`
-	CreatedAtString  string    `json:"created"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at,omitempty"`
+	ID               any             `json:"_id"`
+	UserId           string          `json:"user_id"`
+	Amount           float64         `json:"amount"`
+	Type             string          `json:"type"`
+	Subject          string          `json:"subject"`
+	PersonOrBusiness string          `json:"person_business"`
+	Description      string          `json:"description"`
+	CreatedAtString  string          `json:"created"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at,omitempty"`
+	Origin           *OriginResponse `json:"origin"`
 }
 
 type response struct {
@@ -29,11 +30,11 @@ type response struct {
 }
 
 type PaginatedResponse struct {
-	Page           uint64                `json:"page"`
-	Limit          uint64                `json:"limit"`
-	TotalDocuments int64                 `json:"totalDocuments"`
-	TotalPages     int                   `json:"totalPages"`
-	Data           []TransactionResponse `json:"data"`
+	Page           uint64 `json:"page"`
+	Limit          uint64 `json:"limit"`
+	TotalDocuments int64  `json:"totalDocuments"`
+	TotalPages     int    `json:"totalPages"`
+	Data           any    `json:"data"`
 }
 
 type ErrorResponse struct {
@@ -60,7 +61,7 @@ var errorStatusMap = map[error]int{
 
 func NewTransactionResponse(transaction *domain.Transaction) TransactionResponse {
 
-	return TransactionResponse{
+	response := TransactionResponse{
 		ID:               transaction.ID,
 		UserId:           transaction.UserId,
 		Amount:           transaction.Amount,
@@ -72,6 +73,19 @@ func NewTransactionResponse(transaction *domain.Transaction) TransactionResponse
 		CreatedAt:        transaction.CreatedAt,
 		UpdatedAt:        transaction.UpdatedAt,
 	}
+
+	if transaction.Origin != nil {
+		response.Origin = &OriginResponse{
+			ID:        transaction.Origin.ID,
+			UserId:    transaction.Origin.UserId,
+			Name:      transaction.Origin.Name,
+			Total:     transaction.Origin.Total,
+			CreatedAt: transaction.Origin.CreatedAt,
+			UpdatedAt: transaction.Origin.UpdatedAt,
+		}
+	}
+
+	return response
 }
 
 func NewPaginatedResponse(
@@ -79,7 +93,7 @@ func NewPaginatedResponse(
 	limit uint64,
 	totalDocuments int64,
 	totalPages int,
-	transactionList []TransactionResponse,
+	transactionList any,
 ) PaginatedResponse {
 
 	return PaginatedResponse{

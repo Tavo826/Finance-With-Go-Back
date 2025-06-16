@@ -16,4 +16,5 @@ type Transaction struct {
 	CreatedAtString  string    `json:"created" bson:"created" validate:"required"`
 	CreatedAt        time.Time `json:"created_at" bson:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at,omitempty" bson:"updated_at"`
+	Origin           *Origin   `json:"origin,imitempty" bson:"origin,omitempty"`
 }
