@@ -167,6 +167,7 @@ func (th *TransactionHandler) CreateTransaction(ctx *gin.Context) {
 	transaction := domain.Transaction{
 		Amount:           req.Amount,
 		UserId:           req.UserId,
+		OriginId:         &req.OriginId,
 		Type:             req.Type,
 		Subject:          req.Subject,
 		PersonOrBusiness: req.PersonOrBusiness,
@@ -205,6 +206,7 @@ func (th *TransactionHandler) UpdateTransaction(ctx *gin.Context) {
 	transaction := domain.Transaction{
 		Amount:           req.Amount,
 		UserId:           req.UserId,
+		OriginId:         &req.OriginId,
 		Type:             req.Type,
 		Subject:          req.Subject,
 		PersonOrBusiness: req.PersonOrBusiness,

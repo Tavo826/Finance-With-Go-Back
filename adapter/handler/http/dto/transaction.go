@@ -27,6 +27,7 @@ type IdRequest struct {
 type TransactionRequest struct {
 	Amount           float64   `json:"amount" validate:"required" binding:"gte=0"`
 	UserId           string    `json:"user_id" bson:"user_id" validate:"required"`
+	OriginId         string    `json:"origin_id" bson:"origin_id"`
 	Type             string    `json:"type" validate:"required"`
 	Subject          string    `json:"subject" validate:"required"`
 	PersonOrBusiness string    `json:"person_business" bson:"person_business" validate:"required"`
