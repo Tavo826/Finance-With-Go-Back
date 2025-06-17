@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log"
 	"personal-finance/adapter/config"
 	"personal-finance/core/domain"
 
@@ -31,7 +30,6 @@ func (or *OriginRepository) GetOriginsByUserId(ctx context.Context, userId strin
 
 	cursor, err := or.db.Find(ctx, filter)
 	if err != nil {
-		log.Println("Repo error: ", err)
 		return nil, err
 	}
 

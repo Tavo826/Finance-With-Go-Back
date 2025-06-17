@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"log"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
 )
@@ -22,7 +21,6 @@ func (os *OriginService) GetOriginsByUserId(ctx context.Context, userId string) 
 
 	origins, err := os.repo.GetOriginsByUserId(ctx, userId)
 	if err != nil {
-		log.Println("Service Error: ", err)
 		return nil, domain.ErrInternal
 	}
 

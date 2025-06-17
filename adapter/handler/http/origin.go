@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"personal-finance/adapter/handler/http/dto"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
@@ -28,8 +27,6 @@ func (oh *OriginHandler) GetOriginsByUserId(ctx *gin.Context) {
 	var req dto.OriginByUserId
 	var originList []dto.OriginResponse
 
-	log.Println("GetOriginsByUserId")
-
 	if err := ctx.Bind(&req); err != nil {
 		dto.ValidationError(ctx, err)
 		return
@@ -37,7 +34,6 @@ func (oh *OriginHandler) GetOriginsByUserId(ctx *gin.Context) {
 
 	origins, err := oh.service.GetOriginsByUserId(ctx, req.UserId)
 	if err != nil {
-		log.Println("Handle error: ", err)
 		dto.HandleError(ctx, err)
 		return
 	}
