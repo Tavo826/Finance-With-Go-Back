@@ -4,6 +4,7 @@ import (
 	"context"
 	"personal-finance/adapter/config"
 	"personal-finance/core/domain"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -81,7 +82,15 @@ func (or *OriginRepository) UpdateOrigin(ctx context.Context, id string, updated
 		return nil, err
 	}
 
-	update := bson.M{"$set": updatedOrigin}
+	origin := domain.OriginRequest{
+		UserId:    updatedOrigin.UserId,
+		Name:      updatedOrigin.Name,
+		Total:     updatedOrigin.Total,
+		CreatedAt: updatedOrigin.CreatedAt,
+		UpdatedAt: time.Now(),
+	}
+
+	update := bson.M{"$set": origin}
 
 	result, err := or.db.UpdateOne(ctx, bson.M{"_id": objectId}, update)
 	if err != nil {
