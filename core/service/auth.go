@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"log"
 	"mime/multipart"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
@@ -106,7 +105,6 @@ func (as *AuthService) VerifyUserEmail(ctx context.Context, email string) (bool,
 		if err.Error() == domain.ErrNoDocuments.Error() {
 			return false, nil
 		}
-		log.Println(err.Error())
 		return true, domain.ErrInternal
 	}
 

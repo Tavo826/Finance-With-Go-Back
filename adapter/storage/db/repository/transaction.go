@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log"
 	"personal-finance/adapter/config"
 	"personal-finance/core/domain"
 	"time"
@@ -250,7 +249,6 @@ func (tr *TransactionRepository) GetTransactionById(ctx context.Context, id stri
 	var transaction domain.Transaction
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		log.Println("Error id decode: ", err)
 		return nil, err
 	}
 
@@ -375,7 +373,6 @@ func (tr *TransactionRepository) DeleteTransactionsByUserId(ctx context.Context,
 
 	_, err := tr.db.DeleteMany(ctx, bson.M{"user_id": id})
 	if err != nil {
-		log.Println("ERROR: ", err)
 		return err
 	}
 

@@ -48,18 +48,18 @@ func main() {
 
 	validate := validator.New()
 
+	originRepo := repository.NewOriginRepository(db, config.DB)
+	originService := service.NewOriginService(originRepo)
+	originHandler := http.NewOriginHandler(originService, validate)
+
 	transactionRepo := repository.NewTransactionRepository(db, config.DB)
-	transactionService := service.NewTransactionService(transactionRepo)
+	transactionService := service.NewTransactionService(transactionRepo, originRepo)
 	transactionHandler := http.NewTransactionHandler(transactionService, validate)
 
 	authRepo := repository.NewAuthRepository(db, config.DB)
 	imageAdapter := adapter.NewImageAdapter(storage)
 	authService := service.NewAuthService(authRepo, transactionRepo, imageAdapter)
 	authHandler := http.NewAuthHandler(authService, validate, config.Token)
-
-	originRepo := repository.NewOriginRepository(db, config.DB)
-	originService := service.NewOriginService(originRepo)
-	originHandler := http.NewOriginHandler(originService, validate)
 
 	router, err := http.NewRouter(config, *transactionHandler, *authHandler, *originHandler)
 	if err != nil {

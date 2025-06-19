@@ -24,5 +24,6 @@ type TransactionService interface {
 	GetTransactionById(ctx context.Context, id string) (*domain.Transaction, error)
 	CreateTransaction(ctx context.Context, createTransaction *domain.Transaction) (*domain.Transaction, error)
 	UpdateTransaction(ctx context.Context, id string, updatedTransaction *domain.Transaction) (*domain.Transaction, error)
+	UpdateTotalOrigin(ctx context.Context, transaction *domain.Transaction, transactionType string) error
 	DeleteTransaction(ctx context.Context, id string) error
 }

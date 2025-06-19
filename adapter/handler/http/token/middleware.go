@@ -1,7 +1,6 @@
 package token
 
 import (
-	"log"
 	"personal-finance/adapter/config"
 	"personal-finance/adapter/handler/http/dto"
 	"personal-finance/core/domain"
@@ -35,8 +34,6 @@ func (am *AuthMiddleware) Implement(config *config.Token) gin.HandlerFunc {
 			return jwtSecret, nil
 		})
 		if err != nil || !token.Valid {
-			log.Println("Error token:", err)
-			log.Print("Valid token:", token.Valid)
 			dto.HandleError(ctx, domain.ErrInvalidToken)
 			ctx.Abort()
 			return

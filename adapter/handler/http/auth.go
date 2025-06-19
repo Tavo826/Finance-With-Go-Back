@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log"
 	"net/http"
 	"personal-finance/adapter/config"
 	"personal-finance/adapter/handler/http/dto"
@@ -48,7 +47,6 @@ func (ah *AuthHandler) Register(ctx *gin.Context) {
 
 	exists, err := ah.service.VerifyUserEmail(ctx, req.Email)
 	if err != nil {
-		log.Println("Error verify email exists")
 		dto.HandleError(ctx, err)
 		return
 	}
@@ -137,8 +135,6 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 func (ah *AuthHandler) GetUserById(ctx *gin.Context) {
 	var request dto.UserRequest
 
-	log.Println("Handler getting user")
-
 	if err := ctx.Bind(&request); err != nil {
 		dto.ValidationError(ctx, err)
 		return
@@ -156,8 +152,6 @@ func (ah *AuthHandler) GetUserById(ctx *gin.Context) {
 }
 
 func (ah *AuthHandler) UpdateUser(ctx *gin.Context) {
-
-	log.Println("Update request: ", ctx.Request)
 
 	const MaxImageSize = 5 << 20
 	id := ctx.Param("id")

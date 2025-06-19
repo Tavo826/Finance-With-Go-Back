@@ -183,6 +183,14 @@ func (th *TransactionHandler) CreateTransaction(ctx *gin.Context) {
 		return
 	}
 
+	if *transaction.OriginId != "" {
+		err = th.service.UpdateTotalOrigin(ctx, &transaction, transaction.Type)
+		if err != nil {
+			dto.HandleError(ctx, err)
+			return
+		}
+	}
+
 	response := dto.NewTransactionResponse(&transaction)
 
 	dto.HandleSuccess(ctx, response)
@@ -222,19 +230,49 @@ func (th *TransactionHandler) UpdateTransaction(ctx *gin.Context) {
 		return
 	}
 
+	if *transaction.OriginId != "" {
+		err = th.service.UpdateTotalOrigin(ctx, &transaction, transaction.Type)
+		if err != nil {
+			dto.HandleError(ctx, err)
+			return
+		}
+	}
+
 	response := dto.NewTransactionResponse(&transaction)
 
 	dto.HandleSuccess(ctx, response)
 }
 
 func (th *TransactionHandler) DeleteTransaction(ctx *gin.Context) {
+
+	var transactionType string = "Input"
+
 	var request dto.IdRequest
 	if err := ctx.ShouldBindUri(&request); err != nil {
 		dto.ValidationError(ctx, err)
 		return
 	}
 
-	err := th.service.DeleteTransaction(ctx, request.ID)
+	transaction, err := th.service.GetTransactionById(ctx, request.ID)
+	if err != nil {
+		dto.HandleError(ctx, err)
+		return
+	}
+
+	if *transaction.OriginId != "" {
+
+		if transaction.Type == "Input" {
+			transactionType = "Output"
+		}
+
+		err = th.service.UpdateTotalOrigin(ctx, transaction, transactionType)
+		if err != nil {
+			dto.HandleError(ctx, err)
+			return
+		}
+	}
+
+	err = th.service.DeleteTransaction(ctx, request.ID)
 	if err != nil {
 		dto.HandleError(ctx, err)
 		return

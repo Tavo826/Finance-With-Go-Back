@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"log"
 	"personal-finance/adapter/config"
 	"personal-finance/core/domain"
 
@@ -30,7 +29,6 @@ func (ar *AuthRepository) GetUserById(ctx context.Context, id string) (*domain.U
 	}
 
 	if err := ar.db.FindOne(ctx, bson.M{"_id": objectId}).Decode(&user); err != nil {
-		log.Println("Repo err: ", err)
 		return nil, err
 	}
 
