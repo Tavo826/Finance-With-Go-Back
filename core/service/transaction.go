@@ -111,9 +111,9 @@ func (ts *TransactionService) UpdateTransaction(ctx context.Context, id string, 
 	return transaction, nil
 }
 
-func (ts *TransactionService) UpdateTotalOrigin(ctx context.Context, transaction *domain.Transaction, transactionType string) error {
+func (ts *TransactionService) UpdateTotalOrigin(ctx context.Context, originId string, transactionType string, amount float64) error {
 
-	origin, err := ts.originRepo.GetOriginById(ctx, *transaction.OriginId)
+	origin, err := ts.originRepo.GetOriginById(ctx, originId)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
 			return err
@@ -124,13 +124,13 @@ func (ts *TransactionService) UpdateTotalOrigin(ctx context.Context, transaction
 		return domain.ErrInternal
 	}
 
-	if transactionType == "Input" {
-		origin.Total += transaction.Amount
+	if transactionType == "Income" {
+		origin.Total += amount
 	} else if transactionType == "Output" {
-		origin.Total -= transaction.Amount
+		origin.Total -= amount
 	}
 
-	_, err = ts.originRepo.UpdateOrigin(ctx, *transaction.OriginId, origin)
+	_, err = ts.originRepo.UpdateOrigin(ctx, originId, origin)
 	if err != nil {
 		return domain.ErrInternal
 	}
