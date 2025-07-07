@@ -1,6 +1,6 @@
 # Finance-With-Go-Back
 
-go run .
+go run .\cmd\http\main.go
 
 ## Deployed using Render 
 
