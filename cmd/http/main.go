@@ -12,10 +12,12 @@ import (
 	"personal-finance/adapter/storage/cloud/adapter"
 	"personal-finance/adapter/storage/db"
 	"personal-finance/adapter/storage/db/repository"
+	"personal-finance/adapter/web/mail"
 	"personal-finance/core/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -60,6 +62,26 @@ func main() {
 	imageAdapter := adapter.NewImageAdapter(storage)
 	authService := service.NewAuthService(authRepo, transactionRepo, imageAdapter)
 	authHandler := http.NewAuthHandler(authService, validate, config.Token)
+
+	mailAdapter := mail.NewMailReportAdapter(config.Mail)
+	reportService := service.NewReportService(mailAdapter)
+	reportHandler := http.NewReportHandler(authService, transactionService, originService, reportService)
+
+	c := cron.New()
+
+	_, err = c.AddFunc("0 9 1 * *", func() {
+		slog.Info("Finantial report initialized...")
+		err := reportHandler.GenerateMonthlyTransactionReport(context.Background())
+		if err != nil {
+			slog.Error("Error sending reports: ", "error", err)
+		}
+		slog.Info("Financial reports emailed successfully!")
+	})
+	if err != nil {
+		slog.Error("Error al crear la tarea")
+	}
+
+	c.Start()
 
 	router, err := http.NewRouter(config, *transactionHandler, *authHandler, *originHandler)
 	if err != nil {

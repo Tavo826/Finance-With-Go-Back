@@ -7,6 +7,7 @@ import (
 )
 
 type AuthRepository interface {
+	GetAllUsers(ctx context.Context) ([]domain.User, error)
 	GetUserById(ctx context.Context, id string) (*domain.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
 	CreateUser(ctx context.Context, createUser *domain.User) (*domain.User, error)
@@ -15,6 +16,7 @@ type AuthRepository interface {
 }
 
 type AuthService interface {
+	GetAllUsers(ctx context.Context) ([]domain.User, error)
 	GetUserById(ctx context.Context, id string) (*domain.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
 	VerifyUserEmail(ctx context.Context, email string) (bool, error)

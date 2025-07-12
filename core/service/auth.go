@@ -21,6 +21,22 @@ func NewAuthService(authRepo port.AuthRepository, transactionRepo port.Transacti
 	}
 }
 
+func (as *AuthService) GetAllUsers(ctx context.Context) ([]domain.User, error) {
+
+	users, err := as.authRepo.GetAllUsers(ctx)
+	if err != nil {
+		if err == domain.ErrDataNotFound {
+			return nil, err
+		}
+		if err.Error() == domain.ErrNoDocuments.Error() {
+			return nil, domain.ErrDataNotFound
+		}
+		return nil, domain.ErrInternal
+	}
+
+	return users, nil
+}
+
 func (as *AuthService) GetUserById(ctx context.Context, id string) (*domain.User, error) {
 
 	user, err := as.authRepo.GetUserById(ctx, id)

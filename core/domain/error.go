@@ -8,6 +8,7 @@ var (
 	ErrNoDocuments                = errors.New("mongo: no documents in result")
 	ErrNoUpdatedData              = errors.New("no data to update")
 	ErrConflictingData            = errors.New("data conflicts with existing data in unique column")
+	ErrMailDontExists             = errors.New("user email dont exists")
 	ErrUserAlreadyExists          = errors.New("user email already exists")
 	ErrGettingFile                = errors.New("cannot get the file from request")
 	ErrFileSize                   = errors.New("file size exceeds 5MB")

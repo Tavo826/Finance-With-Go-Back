@@ -11,6 +11,7 @@ type (
 		App        *App
 		DB         *DB
 		ImageCloud *ImageCloud
+		Mail       *Mail
 		Token      *Token
 	}
 
@@ -31,6 +32,12 @@ type (
 
 	ImageCloud struct {
 		Connection string
+	}
+
+	Mail struct {
+		Host     string
+		Username string
+		Password string
 	}
 
 	Token struct {
@@ -66,6 +73,12 @@ func New() (*Container, error) {
 		Connection: os.Getenv("CLOUDINARY_URL"),
 	}
 
+	mailService := &Mail{
+		Host:     os.Getenv("MAIL_SERVICE_HOST"),
+		Username: os.Getenv("MAIL_SERVICE_USERNAME"),
+		Password: os.Getenv("MAIL_SERVICE_PASS"),
+	}
+
 	token := &Token{
 		JwtSecret: os.Getenv("JWT_SECRET"),
 	}
@@ -74,6 +87,7 @@ func New() (*Container, error) {
 		app,
 		db,
 		imageCloud,
+		mailService,
 		token,
 	}, nil
 }

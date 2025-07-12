@@ -20,6 +20,28 @@ func NewAuthRepository(db *mongo.Database, config *config.DB) *AuthRepository {
 	}
 }
 
+func (ar *AuthRepository) GetAllUsers(ctx context.Context) ([]domain.User, error) {
+
+	var users []domain.User
+
+	cursor, err := ar.db.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var user domain.User
+		if err := cursor.Decode(&user); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 func (ar *AuthRepository) GetUserById(ctx context.Context, id string) (*domain.User, error) {
 
 	var user domain.User
