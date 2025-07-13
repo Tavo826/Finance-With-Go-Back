@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"log"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
 	"time"
@@ -44,6 +45,8 @@ func (rh *ReportHandler) GenerateMonthlyTransactionReport(ctx context.Context) e
 	}
 
 	for _, user := range users {
+
+		log.Println("Sending report to: ", user.Username)
 
 		report.UserId = user.ID
 		report.Username = user.Username

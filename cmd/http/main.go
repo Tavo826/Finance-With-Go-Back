@@ -78,7 +78,7 @@ func main() {
 		slog.Info("Financial reports emailed successfully!")
 	})
 	if err != nil {
-		slog.Error("Error al crear la tarea")
+		slog.Error("Error creating cron task")
 	}
 
 	c.Start()
