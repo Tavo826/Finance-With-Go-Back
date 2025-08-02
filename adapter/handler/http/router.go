@@ -19,6 +19,7 @@ func NewRouter(
 	transactionHandler TransactionHandler,
 	authHandler AuthHandler,
 	originHandler OriginHandler,
+	reportHandler ReportHandler,
 ) (*Router, error) {
 
 	if config.App.Env == "production" {
@@ -80,6 +81,12 @@ func NewRouter(
 			origin.POST("/", originHandler.CreateOrigin)
 			origin.PUT("/:id", originHandler.UpdateOrigin)
 			origin.DELETE("/:id", originHandler.DeleteOrigin)
+		}
+
+		report := v1.Group("/reports")
+		report.Use(middleware.Implement(config.Token))
+		{
+			report.GET("/", reportHandler.GenerateMonthlyTransactionReport)
 		}
 	}
 

@@ -1,11 +1,12 @@
 package http
 
 import (
-	"context"
-	"log"
+	"personal-finance/adapter/handler/http/dto"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ReportHandler struct {
@@ -28,7 +29,13 @@ func NewReportHandler(
 	}
 }
 
-func (rh *ReportHandler) GenerateMonthlyTransactionReport(ctx context.Context) error {
+func (rh *ReportHandler) GenerateMonthlyTransactionReport(ctx *gin.Context) {
+
+	var request dto.RequestByUserId
+	if err := ctx.Bind(&request); err != nil {
+		dto.ValidationError(ctx, err)
+		return
+	}
 
 	var report domain.Report
 	var transactionList []domain.Transaction
@@ -39,52 +46,52 @@ func (rh *ReportHandler) GenerateMonthlyTransactionReport(ctx context.Context) e
 	var now = time.Now()
 	var lastMonth = now.AddDate(0, -1, 0).Month()
 
-	users, err := rh.userService.GetAllUsers(ctx)
+	user, err := rh.userService.GetUserById(ctx, request.UserId)
 	if err != nil {
-		return err
+		dto.HandleError(ctx, err)
+		return
 	}
 
-	for _, user := range users {
+	report.UserId = user.ID
+	report.Username = user.Username
+	report.UserEmail = user.Email
+	report.Month = lastMonth
+	report.Year = now.Year()
 
-		log.Println("Sending report to: ", user.Username)
+	origins, err = rh.originService.GetOriginsByUserId(ctx, user.ID)
+	if err != nil {
+		dto.HandleError(ctx, err)
+		return
+	}
 
-		report.UserId = user.ID
-		report.Username = user.Username
-		report.UserEmail = user.Email
-		report.Month = lastMonth
-		report.Year = now.Year()
+	report.NetBalance = calculateUserTotalNetwork(origins)
 
-		origins, err = rh.originService.GetOriginsByUserId(ctx, user.ID)
+	for {
+		transactions, _, totalPages, err := rh.transactionService.GetTransactionsByDate(ctx, user.ID, page, limit, now.Year(), int(lastMonth))
 		if err != nil {
-			return err
+			dto.HandleError(ctx, err)
+			return
 		}
 
-		report.NetBalance = calculateUserTotalNetwork(origins)
+		transactionList = append(transactionList, transactions...)
 
-		for {
-			transactions, _, totalPages, err := rh.transactionService.GetTransactionsByDate(ctx, user.ID, page, limit, now.Year(), int(lastMonth))
-			if err != nil {
-				return err
-			}
+		page += 1
 
-			transactionList = append(transactionList, transactions...)
-
-			page += 1
-
-			if int(page) > totalPages.(int) {
-				break
-			}
-		}
-
-		report.TotalIncome, report.TotalExpenses = calculateIncomeAndExpenses(transactionList)
-		report.OriginSummary = calculateOriginSummary(transactionList, origins)
-
-		if err = rh.reportService.SendReport(report); err != nil {
-			return err
+		if int(page) > totalPages.(int) {
+			break
 		}
 	}
 
-	return nil
+	report.TotalIncome, report.TotalExpenses = calculateIncomeAndExpenses(transactionList)
+	report.OriginSummary = calculateOriginSummary(transactionList, origins)
+
+	if err = rh.reportService.SendReport(report); err != nil {
+		dto.HandleError(ctx, err)
+		return
+	}
+
+	dto.HandleSuccess(ctx, "Mail sended successfully")
+
 }
 
 func calculateUserTotalNetwork(origins []domain.Origin) float64 {

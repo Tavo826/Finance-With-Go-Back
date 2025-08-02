@@ -17,7 +17,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -67,23 +66,7 @@ func main() {
 	reportService := service.NewReportService(mailAdapter)
 	reportHandler := http.NewReportHandler(authService, transactionService, originService, reportService)
 
-	c := cron.New()
-
-	_, err = c.AddFunc("0 9 1 * *", func() {
-		slog.Info("Finantial report initialized...")
-		err := reportHandler.GenerateMonthlyTransactionReport(context.Background())
-		if err != nil {
-			slog.Error("Error sending reports: ", "error", err)
-		}
-		slog.Info("Financial reports emailed successfully!")
-	})
-	if err != nil {
-		slog.Error("Error creating cron task")
-	}
-
-	c.Start()
-
-	router, err := http.NewRouter(config, *transactionHandler, *authHandler, *originHandler)
+	router, err := http.NewRouter(config, *transactionHandler, *authHandler, *originHandler, *reportHandler)
 	if err != nil {
 		slog.Error("Error initializing router", "error", err)
 		os.Exit(1)

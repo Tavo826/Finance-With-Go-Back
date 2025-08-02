@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type OriginByUserId struct {
+type RequestByUserId struct {
 	UserId string `form:"user_id" binding:"required"`
 }
 

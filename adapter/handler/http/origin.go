@@ -24,7 +24,7 @@ func NewOriginHandler(service port.OriginService, validate *validator.Validate) 
 
 func (oh *OriginHandler) GetOriginsByUserId(ctx *gin.Context) {
 
-	var req dto.OriginByUserId
+	var req dto.RequestByUserId
 	var originList []dto.OriginResponse
 
 	if err := ctx.Bind(&req); err != nil {
