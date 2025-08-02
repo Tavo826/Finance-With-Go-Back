@@ -82,8 +82,10 @@ func (rh *ReportHandler) GenerateMonthlyTransactionReport(ctx *gin.Context) {
 		}
 	}
 
-	report.TotalIncome, report.TotalExpenses = calculateIncomeAndExpenses(transactionList)
-	report.OriginSummary = calculateOriginSummary(transactionList, origins)
+	filteredTransactions := filterTransactionsByType(transactionList)
+
+	report.TotalIncome, report.TotalExpenses = calculateIncomeAndExpenses(filteredTransactions)
+	report.OriginSummary = calculateOriginSummary(filteredTransactions, origins)
 
 	if err = rh.reportService.SendReport(report); err != nil {
 		dto.HandleError(ctx, err)
@@ -92,6 +94,19 @@ func (rh *ReportHandler) GenerateMonthlyTransactionReport(ctx *gin.Context) {
 
 	dto.HandleSuccess(ctx, "Mail sended successfully")
 
+}
+
+func filterTransactionsByType(transactionList []domain.Transaction) []domain.Transaction {
+
+	var filteredTransactionList []domain.Transaction
+
+	for _, transaction := range transactionList {
+		if transaction.Type == "Income" || transaction.Type == "Output" {
+			filteredTransactionList = append(filteredTransactionList, transaction)
+		}
+	}
+
+	return filteredTransactionList
 }
 
 func calculateUserTotalNetwork(origins []domain.Origin) float64 {
