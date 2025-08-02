@@ -101,7 +101,7 @@ func filterTransactionsByType(transactionList []domain.Transaction) []domain.Tra
 	var filteredTransactionList []domain.Transaction
 
 	for _, transaction := range transactionList {
-		if transaction.Type == "Income" || transaction.Type == "Output" {
+		if transaction.Subject == "Payment" || transaction.Subject == "Expense" {
 			filteredTransactionList = append(filteredTransactionList, transaction)
 		}
 	}
