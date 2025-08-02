@@ -1,10 +1,12 @@
 package mail
 
 import (
+	"crypto/tls"
 	"html/template"
 	"log"
 	"personal-finance/adapter/config"
 	"personal-finance/core/domain"
+	"strconv"
 
 	"github.com/wneessen/go-mail"
 	"golang.org/x/text/language"
@@ -102,8 +104,18 @@ func (ra *MailReportAdapter) SendMail(report domain.Report) error {
 		return err
 	}
 
-	client, err := mail.NewClient(ra.config.Host, mail.WithSMTPAuth(mail.SMTPAuthPlain),
-		mail.WithUsername(ra.config.Username), mail.WithPassword(ra.config.Password))
+	port, err := strconv.Atoi(ra.config.Port)
+	if err != nil {
+		return err
+	}
+
+	client, err := mail.NewClient(
+		ra.config.Host,
+		mail.WithPort(port),
+		mail.WithSMTPAuth(mail.SMTPAuthPlain),
+		mail.WithTLSConfig(&tls.Config{ServerName: ra.config.Host}),
+		mail.WithUsername(ra.config.Username),
+		mail.WithPassword(ra.config.Password))
 	if err != nil {
 		return err
 	}

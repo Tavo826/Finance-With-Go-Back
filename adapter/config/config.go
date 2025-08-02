@@ -36,6 +36,7 @@ type (
 
 	Mail struct {
 		Host     string
+		Port     string
 		Username string
 		Password string
 	}
@@ -75,6 +76,7 @@ func New() (*Container, error) {
 
 	mailService := &Mail{
 		Host:     os.Getenv("MAIL_SERVICE_HOST"),
+		Port:     os.Getenv("MAIL_SERVICE_PORT"),
 		Username: os.Getenv("MAIL_SERVICE_USERNAME"),
 		Password: os.Getenv("MAIL_SERVICE_PASS"),
 	}
