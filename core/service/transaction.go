@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
 )
@@ -73,7 +74,7 @@ func (ts *TransactionService) GetTransactionById(ctx context.Context, id string)
 		if err == domain.ErrDataNotFound {
 			return nil, err
 		}
-		if err.Error() == domain.ErrNoDocuments.Error() {
+		if errors.Is(err, domain.ErrDataNotFound) {
 			return nil, domain.ErrNoDocuments
 		}
 		return nil, domain.ErrInternal
@@ -205,7 +206,7 @@ func (ts *TransactionService) UpdateTotalOrigin(ctx context.Context, originId st
 		if err == domain.ErrDataNotFound {
 			return err
 		}
-		if err.Error() == domain.ErrNoDocuments.Error() {
+		if errors.Is(err, domain.ErrDataNotFound) {
 			return domain.ErrNoDocuments
 		}
 		return domain.ErrInternal

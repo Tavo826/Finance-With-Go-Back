@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"mime/multipart"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
@@ -28,7 +29,7 @@ func (as *AuthService) GetUserById(ctx context.Context, id string) (*domain.User
 		if err == domain.ErrDataNotFound {
 			return nil, err
 		}
-		if err.Error() == domain.ErrNoDocuments.Error() {
+		if errors.Is(err, domain.ErrDataNotFound) {
 			return nil, domain.ErrDataNotFound
 		}
 		return nil, domain.ErrInternal
@@ -102,7 +103,7 @@ func (as *AuthService) VerifyUserEmail(ctx context.Context, email string) (bool,
 		if err == domain.ErrDataNotFound {
 			return false, nil
 		}
-		if err.Error() == domain.ErrNoDocuments.Error() {
+		if errors.Is(err, domain.ErrDataNotFound) {
 			return false, nil
 		}
 		return true, domain.ErrInternal
