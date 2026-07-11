@@ -224,15 +224,7 @@ func (th *TransactionHandler) UpdateTransaction(ctx *gin.Context) {
 		UpdatedAt:        time.Now(),
 	}
 
-	actualTransaction, err := th.service.GetTransactionById(ctx, id)
-	if err != nil {
-		dto.HandleError(ctx, err)
-		return
-	}
-
-	verifyAndUpdateOrigin(ctx, th, actualTransaction, updatedTransaction)
-
-	_, err = th.service.UpdateTransaction(ctx, id, &updatedTransaction)
+	_, err := th.service.UpdateTransaction(ctx, id, &updatedTransaction)
 	if err != nil {
 		dto.HandleError(ctx, err)
 		return
@@ -241,87 +233,6 @@ func (th *TransactionHandler) UpdateTransaction(ctx *gin.Context) {
 	response := dto.NewTransactionResponse(&updatedTransaction)
 
 	dto.HandleSuccess(ctx, response)
-}
-
-func verifyAndUpdateOrigin(ctx *gin.Context, th *TransactionHandler, actualTransaction *domain.Transaction, updatedTransaction domain.Transaction) {
-
-	originId := ""
-	transactionType := ""
-	updateOrigin := false
-	amount := float64(0)
-
-	if *actualTransaction.OriginId != *updatedTransaction.OriginId {
-
-		if actualTransaction.OriginId == nil {
-			updateOrigin = true
-			originId = *updatedTransaction.OriginId
-
-			transactionType = updatedTransaction.Type
-			amount = updatedTransaction.Amount
-		} else {
-
-			updateOrigin = true
-
-			originId = *actualTransaction.OriginId
-
-			if actualTransaction.Type == "Income" {
-				transactionType = "Output"
-			} else {
-				transactionType = "Income"
-			}
-
-			amount = actualTransaction.Amount
-
-			err := th.service.UpdateTotalOrigin(ctx, originId, transactionType, float64(amount))
-			if err != nil {
-				dto.HandleError(ctx, err)
-				return
-			}
-
-			originId = *updatedTransaction.OriginId
-
-			transactionType = updatedTransaction.Type
-			amount = updatedTransaction.Amount
-		}
-
-	} else if *actualTransaction.OriginId == *updatedTransaction.OriginId {
-
-		originId = *updatedTransaction.OriginId
-		transactionType = updatedTransaction.Type
-
-		if actualTransaction.Type != updatedTransaction.Type {
-
-			updateOrigin = true
-			amount = actualTransaction.Amount + updatedTransaction.Amount
-		} else {
-
-			if actualTransaction.Amount != updatedTransaction.Amount {
-
-				updateOrigin = true
-
-				if actualTransaction.Amount > updatedTransaction.Amount {
-					amount = actualTransaction.Amount - updatedTransaction.Amount
-
-					if actualTransaction.Type == "Income" {
-						transactionType = "Output"
-					} else {
-						transactionType = "Income"
-					}
-				} else {
-					amount = updatedTransaction.Amount - actualTransaction.Amount
-				}
-			}
-		}
-	}
-
-	if updateOrigin {
-
-		err := th.service.UpdateTotalOrigin(ctx, originId, transactionType, float64(amount))
-		if err != nil {
-			dto.HandleError(ctx, err)
-			return
-		}
-	}
 }
 
 func (th *TransactionHandler) DeleteTransaction(ctx *gin.Context) {

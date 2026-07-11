@@ -97,7 +97,16 @@ func (ts *TransactionService) CreateTransaction(ctx context.Context, transaction
 
 func (ts *TransactionService) UpdateTransaction(ctx context.Context, id string, transaction *domain.Transaction) (*domain.Transaction, error) {
 
-	_, err := ts.transactionRepo.UpdateTransaction(ctx, id, transaction)
+	actualTransaction, err := ts.GetTransactionById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ts.reconcileOriginBalance(ctx, actualTransaction, transaction); err != nil {
+		return nil, err
+	}
+
+	_, err = ts.transactionRepo.UpdateTransaction(ctx, id, transaction)
 	if err != nil {
 		if err == domain.ErrConflictingData {
 			return nil, err
@@ -109,6 +118,84 @@ func (ts *TransactionService) UpdateTransaction(ctx context.Context, id string, 
 	}
 
 	return transaction, nil
+}
+
+// reconcileOriginBalance applies the balance delta on the origin(s) affected
+// by editing a transaction: origin change, type change and/or amount change.
+func (ts *TransactionService) reconcileOriginBalance(ctx context.Context, actualTransaction *domain.Transaction, updatedTransaction *domain.Transaction) error {
+
+	originId := ""
+	transactionType := ""
+	updateOrigin := false
+	amount := float64(0)
+
+	if *actualTransaction.OriginId != *updatedTransaction.OriginId {
+
+		if actualTransaction.OriginId == nil {
+			updateOrigin = true
+			originId = *updatedTransaction.OriginId
+
+			transactionType = updatedTransaction.Type
+			amount = updatedTransaction.Amount
+		} else {
+
+			updateOrigin = true
+
+			originId = *actualTransaction.OriginId
+
+			if actualTransaction.Type == "Income" {
+				transactionType = "Output"
+			} else {
+				transactionType = "Income"
+			}
+
+			amount = actualTransaction.Amount
+
+			if err := ts.UpdateTotalOrigin(ctx, originId, transactionType, amount); err != nil {
+				return err
+			}
+
+			originId = *updatedTransaction.OriginId
+
+			transactionType = updatedTransaction.Type
+			amount = updatedTransaction.Amount
+		}
+
+	} else if *actualTransaction.OriginId == *updatedTransaction.OriginId {
+
+		originId = *updatedTransaction.OriginId
+		transactionType = updatedTransaction.Type
+
+		if actualTransaction.Type != updatedTransaction.Type {
+
+			updateOrigin = true
+			amount = actualTransaction.Amount + updatedTransaction.Amount
+		} else {
+
+			if actualTransaction.Amount != updatedTransaction.Amount {
+
+				updateOrigin = true
+
+				if actualTransaction.Amount > updatedTransaction.Amount {
+					amount = actualTransaction.Amount - updatedTransaction.Amount
+
+					if actualTransaction.Type == "Income" {
+						transactionType = "Output"
+					} else {
+						transactionType = "Income"
+					}
+				} else {
+					amount = updatedTransaction.Amount - actualTransaction.Amount
+				}
+			}
+		}
+	}
+
+	if updateOrigin {
+		return ts.UpdateTotalOrigin(ctx, originId, transactionType, amount)
+	}
+
+	return nil
 }
 
 func (ts *TransactionService) UpdateTotalOrigin(ctx context.Context, originId string, transactionType string, amount float64) error {
