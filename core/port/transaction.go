@@ -6,8 +6,8 @@ import (
 )
 
 type TransactionRepository interface {
-	GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, any, any, error)
-	GetTransactionsByDate(ctx context.Context, userId string, page, limit uint64, year int, month int) ([]domain.Transaction, any, any, error)
+	GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, int64, int, error)
+	GetTransactionsByDate(ctx context.Context, userId string, page, limit uint64, year int, month int) ([]domain.Transaction, int64, int, error)
 	GetTransactionsBySubject(ctx context.Context, userId string, page, limit uint64, subject string, personOrBusiness string) ([]domain.Transaction, any, any, error)
 	GetTransactionById(ctx context.Context, id string) (*domain.Transaction, error)
 	CreateTransaction(ctx context.Context, createTransaction *domain.Transaction) (*domain.Transaction, error)
@@ -18,7 +18,7 @@ type TransactionRepository interface {
 
 type TransactionService interface {
 	GetStatus(ctx context.Context) string
-	GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, any, any, error)
+	GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, int64, int, error)
 	GetTransactionsByDate(ctx context.Context, userId string, page, limit uint64, year int, month int) ([]domain.Transaction, any, any, error)
 	GetTransactionsBySubject(ctx context.Context, userId string, page, limit uint64, subject string, personOrBusiness string) ([]domain.Transaction, any, any, error)
 	GetTransactionById(ctx context.Context, id string) (*domain.Transaction, error)

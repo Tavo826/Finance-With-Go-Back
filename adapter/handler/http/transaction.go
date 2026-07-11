@@ -55,8 +55,8 @@ func (th *TransactionHandler) GetTransactionsByUserId(ctx *gin.Context) {
 	response := dto.NewPaginatedResponse(
 		req.Page,
 		req.Limit,
-		totalDocuments.(int64),
-		totalPages.(int),
+		totalDocuments,
+		totalPages,
 		transactionList,
 	)
 

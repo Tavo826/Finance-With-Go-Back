@@ -41,11 +41,11 @@ func (ts *TransactionService) GetTransactionsByDate(
 	page, limit uint64,
 	year int,
 	month int,
-) ([]domain.Transaction, any, any, error) {
+) ([]domain.Transaction, int64, int, error) {
 
 	transactions, totalDocuments, totalPages, err := ts.transactionRepo.GetTransactionsByDate(ctx, userId, page, limit, year, month)
 	if err != nil {
-		return nil, nil, nil, domain.ErrInternal
+		return nil, 0, 0, domain.ErrInternal
 	}
 
 	return transactions, totalDocuments, totalPages, nil

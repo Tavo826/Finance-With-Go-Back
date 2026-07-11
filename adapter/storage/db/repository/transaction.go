@@ -384,18 +384,18 @@ func (tr *TransactionRepository) findtransactionUsingPipeline(
 	pipeline mongo.Pipeline,
 	userId string,
 	limit uint64,
-) ([]domain.Transaction, any, any, error) {
+) ([]domain.Transaction, int64, int, error) {
 
 	var transactions []domain.Transaction
 
 	total, err := tr.db.CountDocuments(ctx, bson.M{"user_id": userId})
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, 0, 0, err
 	}
 
 	cursor, err := tr.db.Aggregate(ctx, pipeline)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, 0, 0, err
 	}
 
 	defer cursor.Close(ctx)
@@ -403,13 +403,13 @@ func (tr *TransactionRepository) findtransactionUsingPipeline(
 	for cursor.Next(ctx) {
 		var transaction domain.Transaction
 		if err := cursor.Decode(&transaction); err != nil {
-			return nil, nil, nil, err
+			return nil, 0, 0, err
 		}
 		transactions = append(transactions, transaction)
 	}
 
 	if err := cursor.Err(); err != nil {
-		return nil, nil, nil, err
+		return nil, 0, 0, err
 	}
 
 	totalPages := int((total + int64(limit) - 1) / int64(limit))
