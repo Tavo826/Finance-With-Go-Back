@@ -90,8 +90,8 @@ func (th *TransactionHandler) GetTransactionsByDate(ctx *gin.Context) {
 	response := dto.NewPaginatedResponse(
 		req.Page,
 		req.Limit,
-		totalDocuments.(int64),
-		totalPages.(int),
+		totalDocuments,
+		totalPages,
 		transactionList,
 	)
 
@@ -125,8 +125,8 @@ func (th *TransactionHandler) GetTransactionsBySubject(ctx *gin.Context) {
 	response := dto.NewPaginatedResponse(
 		req.Page,
 		req.Limit,
-		totalDocuments.(int64),
-		totalPages.(int),
+		totalDocuments,
+		totalPages,
 		transactionList,
 	)
 

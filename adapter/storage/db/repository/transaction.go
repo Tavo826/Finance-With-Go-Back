@@ -25,7 +25,7 @@ func (tr *TransactionRepository) GetTransactionsByUserId(
 	ctx context.Context,
 	page, limit uint64,
 	userId string,
-) ([]domain.Transaction, any, any, error) {
+) ([]domain.Transaction, int64, int, error) {
 
 	pipeline := mongo.Pipeline{
 
@@ -85,7 +85,7 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 	page, limit uint64,
 	year int,
 	month int,
-) ([]domain.Transaction, any, any, error) {
+) ([]domain.Transaction, int64, int, error) {
 
 	var dateFilter bson.M
 
@@ -173,7 +173,7 @@ func (tr *TransactionRepository) GetTransactionsBySubject(
 	page, limit uint64,
 	subject string,
 	personOrBusiness string,
-) ([]domain.Transaction, any, any, error) {
+) ([]domain.Transaction, int64, int, error) {
 
 	var subjectFilter bson.M
 

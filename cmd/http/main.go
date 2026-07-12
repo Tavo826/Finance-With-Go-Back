@@ -61,6 +61,7 @@ func main() {
 	reportService := service.NewReportService(mailAdapter)
 	reportHandler := http.NewReportHandler(authService, transactionService, originService, reportService)
 
+	router, err := http.NewRouter(config, *transactionHandler, *authHandler, *originHandler, *reportHandler)
 	if err != nil {
 		slog.Error("Error initializing router", "error", err)
 		os.Exit(1)

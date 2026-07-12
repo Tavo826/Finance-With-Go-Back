@@ -25,11 +25,11 @@ func (ts *TransactionService) GetStatus(ctx context.Context) string {
 	return "OK"
 }
 
-func (ts *TransactionService) GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, any, any, error) {
+func (ts *TransactionService) GetTransactionsByUserId(ctx context.Context, page, limit uint64, userId string) ([]domain.Transaction, int64, int, error) {
 
 	transactions, totalDocuments, totalPages, err := ts.transactionRepo.GetTransactionsByUserId(ctx, page, limit, userId)
 	if err != nil {
-		return nil, nil, nil, domain.ErrInternal
+		return nil, 0, 0, domain.ErrInternal
 	}
 
 	return transactions, totalDocuments, totalPages, nil
@@ -57,11 +57,11 @@ func (ts *TransactionService) GetTransactionsBySubject(
 	page, limit uint64,
 	subject string,
 	personOrBusiness string,
-) ([]domain.Transaction, any, any, error) {
+) ([]domain.Transaction, int64, int, error) {
 
 	transactions, totalDocuments, totalPages, err := ts.transactionRepo.GetTransactionsBySubject(ctx, userId, page, limit, subject, personOrBusiness)
 	if err != nil {
-		return nil, nil, nil, domain.ErrInternal
+		return nil, 0, 0, domain.ErrInternal
 	}
 
 	return transactions, totalDocuments, totalPages, nil

@@ -77,7 +77,7 @@ func (rh *ReportHandler) GenerateMonthlyTransactionReport(ctx *gin.Context) {
 
 		page += 1
 
-		if int(page) > totalPages.(int) {
+		if int(page) > totalPages {
 			break
 		}
 	}
