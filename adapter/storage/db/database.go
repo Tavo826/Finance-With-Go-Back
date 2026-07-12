@@ -9,21 +9,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func New(ctx context.Context, config *config.DB) (*mongo.Database, error) {
+func New(ctx context.Context, config *config.DB) (*mongo.Client, *mongo.Database, error) {
 
 	clientOptions := options.Client().ApplyURI(config.Connection)
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		slog.Error("error connecting to database", "error", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		slog.Error("error in database communication", "error", err)
-		return nil, err
+		return nil, nil, err
 	}
 
-	return client.Database(config.Database), nil
+	return client, client.Database(config.Database), nil
 }

@@ -10,13 +10,15 @@ import (
 type TransactionService struct {
 	transactionRepo port.TransactionRepository
 	originRepo      port.OriginRepository
+	txManager       port.TransactionManager
 }
 
-func NewTransactionService(transactionRepo port.TransactionRepository, originRepo port.OriginRepository) *TransactionService {
+func NewTransactionService(transactionRepo port.TransactionRepository, originRepo port.OriginRepository, txManager port.TransactionManager) *TransactionService {
 
 	return &TransactionService{
 		transactionRepo,
 		originRepo,
+		txManager,
 	}
 }
 
@@ -83,14 +85,30 @@ func (ts *TransactionService) GetTransactionById(ctx context.Context, id string)
 	return transaction, nil
 }
 
+// CreateTransaction inserts the transaction and, if it references an origin,
+// applies its amount to the origin's balance atomically: either both writes
+// commit or neither does.
 func (ts *TransactionService) CreateTransaction(ctx context.Context, transaction *domain.Transaction) (*domain.Transaction, error) {
 
-	transaction, err := ts.transactionRepo.CreateTransaction(ctx, transaction)
-	if err != nil {
-		if err == domain.ErrConflictingData {
-			return nil, err
+	err := ts.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+
+		created, err := ts.transactionRepo.CreateTransaction(txCtx, transaction)
+		if err != nil {
+			if err == domain.ErrConflictingData {
+				return err
+			}
+			return domain.ErrInternal
 		}
-		return nil, domain.ErrInternal
+		*transaction = *created
+
+		if transaction.OriginId != nil && *transaction.OriginId != "" {
+			return ts.UpdateTotalOrigin(txCtx, *transaction.OriginId, transaction.Type, transaction.Amount)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return transaction, nil
@@ -98,24 +116,32 @@ func (ts *TransactionService) CreateTransaction(ctx context.Context, transaction
 
 func (ts *TransactionService) UpdateTransaction(ctx context.Context, id string, transaction *domain.Transaction) (*domain.Transaction, error) {
 
-	actualTransaction, err := ts.GetTransactionById(ctx, id)
+	err := ts.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+
+		actualTransaction, err := ts.GetTransactionById(txCtx, id)
+		if err != nil {
+			return err
+		}
+
+		if err := ts.reconcileOriginBalance(txCtx, actualTransaction, transaction); err != nil {
+			return err
+		}
+
+		_, err = ts.transactionRepo.UpdateTransaction(txCtx, id, transaction)
+		if err != nil {
+			if err == domain.ErrConflictingData {
+				return err
+			}
+			if err == domain.ErrDataNotFound {
+				return domain.ErrDataNotFound
+			}
+			return domain.ErrInternal
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	if err := ts.reconcileOriginBalance(ctx, actualTransaction, transaction); err != nil {
-		return nil, err
-	}
-
-	_, err = ts.transactionRepo.UpdateTransaction(ctx, id, transaction)
-	if err != nil {
-		if err == domain.ErrConflictingData {
-			return nil, err
-		}
-		if err == domain.ErrDataNotFound {
-			return nil, domain.ErrDataNotFound
-		}
-		return nil, domain.ErrInternal
 	}
 
 	return transaction, nil
@@ -226,7 +252,29 @@ func (ts *TransactionService) UpdateTotalOrigin(ctx context.Context, originId st
 	return nil
 }
 
+// DeleteTransaction reverts the transaction's effect on its origin balance
+// (if any) and deletes it atomically: either both writes commit or neither does.
 func (ts *TransactionService) DeleteTransaction(ctx context.Context, id string) error {
 
-	return ts.transactionRepo.DeleteTransaction(ctx, id)
+	return ts.txManager.WithTransaction(ctx, func(txCtx context.Context) error {
+
+		transaction, err := ts.GetTransactionById(txCtx, id)
+		if err != nil {
+			return err
+		}
+
+		if transaction.OriginId != nil && *transaction.OriginId != "" {
+
+			revertType := "Output"
+			if transaction.Type == "Output" {
+				revertType = "Income"
+			}
+
+			if err := ts.UpdateTotalOrigin(txCtx, *transaction.OriginId, revertType, transaction.Amount); err != nil {
+				return err
+			}
+		}
+
+		return ts.transactionRepo.DeleteTransaction(txCtx, id)
+	})
 }

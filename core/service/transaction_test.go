@@ -92,12 +92,20 @@ func (m *mockOriginRepo) DeleteOrigin(ctx context.Context, id string) error {
 	return nil
 }
 
+// noopTxManager runs fn directly against the given ctx, without any real
+// transactional guarantees - sufficient for unit tests against in-memory mocks.
+type noopTxManager struct{}
+
+func (noopTxManager) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return fn(ctx)
+}
+
 // --- helpers ---
 
 func strPtr(s string) *string { return &s }
 
 func newTransactionService(tRepo *mockTransactionRepo, oRepo *mockOriginRepo) *TransactionService {
-	return NewTransactionService(tRepo, oRepo)
+	return NewTransactionService(tRepo, oRepo, noopTxManager{})
 }
 
 // --- UpdateTotalOrigin ---

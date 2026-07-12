@@ -30,11 +30,12 @@ func main() {
 
 	ctx := context.Background()
 
-	db, err := db.New(ctx, config.DB)
+	dbClient, database, err := db.New(ctx, config.DB)
 	if err != nil {
 		slog.Error("Error connecting to database", "error", err)
 		os.Exit(1)
 	}
+	txManager := db.NewMongoTransactionManager(dbClient)
 
 	storage, err := cloud.New(ctx, config.ImageCloud)
 	if err != nil {
@@ -44,15 +45,15 @@ func main() {
 
 	validate := validator.New()
 
-	originRepo := repository.NewOriginRepository(db, config.DB)
+	originRepo := repository.NewOriginRepository(database, config.DB)
 	originService := service.NewOriginService(originRepo)
 	originHandler := http.NewOriginHandler(originService, validate)
 
-	transactionRepo := repository.NewTransactionRepository(db, config.DB)
-	transactionService := service.NewTransactionService(transactionRepo, originRepo)
+	transactionRepo := repository.NewTransactionRepository(database, config.DB)
+	transactionService := service.NewTransactionService(transactionRepo, originRepo, txManager)
 	transactionHandler := http.NewTransactionHandler(transactionService, validate)
 
-	authRepo := repository.NewAuthRepository(db, config.DB)
+	authRepo := repository.NewAuthRepository(database, config.DB)
 	imageAdapter := adapter.NewImageAdapter(storage)
 	authService := service.NewAuthService(authRepo, transactionRepo, imageAdapter)
 	authHandler := http.NewAuthHandler(authService, validate, config.Token)
