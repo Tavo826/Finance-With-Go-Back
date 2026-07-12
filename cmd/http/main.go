@@ -15,7 +15,6 @@ import (
 	"personal-finance/adapter/web/mail"
 	"personal-finance/core/service"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -43,10 +42,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if config.App.Env == "production" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
 	validate := validator.New()
 
 	originRepo := repository.NewOriginRepository(db, config.DB)
@@ -66,7 +61,6 @@ func main() {
 	reportService := service.NewReportService(mailAdapter)
 	reportHandler := http.NewReportHandler(authService, transactionService, originService, reportService)
 
-	router, err := http.NewRouter(config, *transactionHandler, *authHandler, *originHandler, *reportHandler)
 	if err != nil {
 		slog.Error("Error initializing router", "error", err)
 		os.Exit(1)
