@@ -156,6 +156,11 @@ func (ah *AuthHandler) UpdateUser(ctx *gin.Context) {
 	const MaxImageSize = 5 << 20
 	id := ctx.Param("id")
 
+	if ctx.GetString("userID") != id {
+		dto.HandleError(ctx, domain.ErrForbidden)
+		return
+	}
+
 	if err := ctx.Request.ParseMultipartForm(MaxImageSize); err != nil {
 		dto.ValidationError(ctx, err)
 		return
@@ -227,6 +232,11 @@ func (ah *AuthHandler) DeleteUser(ctx *gin.Context) {
 	var request dto.IdRequest
 	if err := ctx.ShouldBindUri(&request); err != nil {
 		dto.ValidationError(ctx, err)
+		return
+	}
+
+	if ctx.GetString("userID") != request.ID {
+		dto.HandleError(ctx, domain.ErrForbidden)
 		return
 	}
 
