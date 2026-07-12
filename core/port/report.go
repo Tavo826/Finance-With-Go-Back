@@ -1,9 +1,12 @@
 package port
 
-import "personal-finance/core/domain"
+import (
+	"context"
+	"personal-finance/core/domain"
+)
 
 type ReportService interface {
-	SendReport(report domain.Report) error
+	GenerateMonthlyReport(ctx context.Context, userId string) error
 }
 
 type MailReportAdapter interface {

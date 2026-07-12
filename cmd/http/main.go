@@ -59,8 +59,8 @@ func main() {
 	authHandler := http.NewAuthHandler(authService, validate, config.Token)
 
 	mailAdapter := mail.NewMailReportAdapter(config.Mail)
-	reportService := service.NewReportService(mailAdapter)
-	reportHandler := http.NewReportHandler(authService, transactionService, originService, reportService)
+	reportService := service.NewReportService(authService, transactionService, originService, mailAdapter)
+	reportHandler := http.NewReportHandler(reportService)
 
 	router, err := http.NewRouter(config, *transactionHandler, *authHandler, *originHandler, *reportHandler)
 	if err != nil {

@@ -1,26 +1,160 @@
 package service
 
 import (
+	"context"
 	"personal-finance/core/domain"
 	"personal-finance/core/port"
+	"time"
 )
 
 type ReportService struct {
-	mailAdapter port.MailReportAdapter
+	authService        port.AuthService
+	transactionService port.TransactionService
+	originService      port.OriginService
+	mailAdapter        port.MailReportAdapter
 }
 
-func NewReportService(mailAdapter port.MailReportAdapter) *ReportService {
+func NewReportService(
+	authService port.AuthService,
+	transactionService port.TransactionService,
+	originService port.OriginService,
+	mailAdapter port.MailReportAdapter) *ReportService {
 
 	return &ReportService{
+		authService,
+		transactionService,
+		originService,
 		mailAdapter,
 	}
 }
 
-func (rs *ReportService) SendReport(report domain.Report) error {
+func (rs *ReportService) GenerateMonthlyReport(ctx context.Context, userId string) error {
 
-	if err := rs.mailAdapter.SendMail(report); err != nil {
+	var report domain.Report
+	var transactionList []domain.Transaction
+	var page uint64 = 1
+	var limit uint64 = 200
+
+	var now = time.Now()
+	var lastMonth = now.AddDate(0, -1, 0).Month()
+
+	user, err := rs.authService.GetUserById(ctx, userId)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	report.UserId = user.ID
+	report.Username = user.Username
+	report.UserEmail = user.Email
+	report.Month = lastMonth
+	report.Year = now.Year()
+
+	origins, err := rs.originService.GetOriginsByUserId(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+
+	report.NetBalance = calculateUserTotalNetwork(origins)
+
+	for {
+		transactions, _, totalPages, err := rs.transactionService.GetTransactionsByDate(ctx, user.ID, page, limit, now.Year(), int(lastMonth))
+		if err != nil {
+			return err
+		}
+
+		transactionList = append(transactionList, transactions...)
+
+		page += 1
+
+		if int(page) > totalPages {
+			break
+		}
+	}
+
+	filteredTransactions := filterTransactionsByType(transactionList)
+
+	report.TotalIncome, report.TotalExpenses = calculateIncomeAndExpenses(filteredTransactions)
+	report.OriginSummary = calculateOriginSummary(filteredTransactions, origins)
+
+	return rs.mailAdapter.SendMail(report)
+}
+
+func filterTransactionsByType(transactionList []domain.Transaction) []domain.Transaction {
+
+	var filteredTransactionList []domain.Transaction
+
+	for _, transaction := range transactionList {
+		if transaction.Subject == "Payment" || transaction.Subject == "Expense" {
+			filteredTransactionList = append(filteredTransactionList, transaction)
+		}
+	}
+
+	return filteredTransactionList
+}
+
+func calculateUserTotalNetwork(origins []domain.Origin) float64 {
+
+	var totalNetwork float64 = 0
+
+	for _, origin := range origins {
+		totalNetwork += origin.Total
+	}
+
+	return totalNetwork
+}
+
+func calculateIncomeAndExpenses(transactions []domain.Transaction) (float64, float64) {
+
+	var totalIncome float64 = 0
+	var totalExpenses float64 = 0
+
+	for _, transaction := range transactions {
+
+		if transaction.Type == "Income" {
+			totalIncome += transaction.Amount
+		} else {
+			totalExpenses += transaction.Amount
+		}
+	}
+
+	return totalIncome, totalExpenses
+}
+
+func calculateOriginSummary(transactions []domain.Transaction, origins []domain.Origin) []domain.OriginSummary {
+
+	incomeMap := make(map[string]float64)
+	outputMap := make(map[string]float64)
+	var originSummaryList []domain.OriginSummary
+
+	for _, origin := range origins {
+		incomeMap[origin.ID] = 0
+		outputMap[origin.ID] = 0
+	}
+
+	for _, transaction := range transactions {
+
+		if transaction.OriginId == nil {
+			continue
+		}
+
+		originId := *transaction.OriginId
+
+		if transaction.Type == "Income" {
+			incomeMap[originId] += transaction.Amount
+		} else {
+			outputMap[originId] += transaction.Amount
+		}
+	}
+
+	for _, origin := range origins {
+		var originSummary domain.OriginSummary
+		originSummary.OriginName = origin.Name
+		originSummary.OriginBalance = origin.Total
+		originSummary.TotalIncome = incomeMap[origin.ID]
+		originSummary.TotalExpenses = outputMap[origin.ID]
+
+		originSummaryList = append(originSummaryList, originSummary)
+	}
+
+	return originSummaryList
 }
