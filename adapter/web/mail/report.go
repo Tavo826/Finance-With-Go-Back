@@ -74,7 +74,28 @@ const (
     </tr>
     {{end}}
   </table>
-</div>`
+</div>
+
+{{if .CategorySummary}}
+<h3 style="text-align: center; margin-top: 40px;">Details by category</h3>
+
+<div style="display: flex; justify-content: center; margin-top: 10px;">
+  <table style="border-collapse: collapse; font-family: Arial, sans-serif; width: 80%; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+    <tr style="background-color: #f2f2f2;">
+      <th style="border: 1px solid #ddd; padding: 12px;">Category</th>
+      <th style="border: 1px solid #ddd; padding: 12px;">Transactions</th>
+      <th style="border: 1px solid #ddd; padding: 12px;">Total expenses</th>
+    </tr>
+    {{range .CategorySummary}}
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 12px;">{{.OutputCategory}}</td>
+      <td style="border: 1px solid #ddd; padding: 12px;">{{.Count}}</td>
+      <td style="border: 1px solid #ddd; padding: 12px;">{{formatMoney .TotalExpenses}}</td>
+    </tr>
+    {{end}}
+  </table>
+</div>
+{{end}}`
 )
 
 func (ra *MailReportAdapter) SendMail(report domain.Report) error {

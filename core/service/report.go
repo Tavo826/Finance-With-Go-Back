@@ -75,6 +75,7 @@ func (rs *ReportService) GenerateMonthlyReport(ctx context.Context, userId strin
 
 	report.TotalIncome, report.TotalExpenses = calculateIncomeAndExpenses(filteredTransactions)
 	report.OriginSummary = calculateOriginSummary(filteredTransactions, origins)
+	report.CategorySummary = calculateCategorySummary(filteredTransactions)
 
 	return rs.mailAdapter.SendMail(report)
 }
@@ -157,4 +158,37 @@ func calculateOriginSummary(transactions []domain.Transaction, origins []domain.
 	}
 
 	return originSummaryList
+}
+
+func calculateCategorySummary(transactions []domain.Transaction) []domain.CategorySummary {
+
+	totalMap := make(map[string]float64)
+	countMap := make(map[string]int)
+	var categoryOrder []string
+	var categorySummaryList []domain.CategorySummary
+
+	for _, transaction := range transactions {
+
+		if transaction.OutputCategory == "" {
+			continue
+		}
+
+		if _, exists := totalMap[transaction.OutputCategory]; !exists {
+			categoryOrder = append(categoryOrder, transaction.OutputCategory)
+		}
+
+		totalMap[transaction.OutputCategory] += transaction.Amount
+		countMap[transaction.OutputCategory] += 1
+	}
+
+	for _, category := range categoryOrder {
+		var categorySummary domain.CategorySummary
+		categorySummary.OutputCategory = category
+		categorySummary.TotalExpenses = totalMap[category]
+		categorySummary.Count = countMap[category]
+
+		categorySummaryList = append(categorySummaryList, categorySummary)
+	}
+
+	return categorySummaryList
 }
