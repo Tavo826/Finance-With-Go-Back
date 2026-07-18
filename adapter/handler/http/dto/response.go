@@ -15,6 +15,7 @@ type TransactionResponse struct {
 	Amount           float64         `json:"amount"`
 	Type             string          `json:"type"`
 	Subject          string          `json:"subject"`
+	OutputCategory   string          `json:"output_category"`
 	PersonOrBusiness string          `json:"person_business"`
 	Description      string          `json:"description"`
 	CreatedAtString  string          `json:"created"`
@@ -67,6 +68,7 @@ func NewTransactionResponse(transaction *domain.Transaction) TransactionResponse
 		Amount:           transaction.Amount,
 		Type:             transaction.Type,
 		Subject:          transaction.Subject,
+		OutputCategory:   transaction.OutputCategory,
 		PersonOrBusiness: transaction.PersonOrBusiness,
 		Description:      transaction.Description,
 		CreatedAtString:  transaction.CreatedAtString,

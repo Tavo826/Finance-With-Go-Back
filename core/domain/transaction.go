@@ -10,6 +10,7 @@ type Transaction struct {
 	OriginId         *string   `json:"origin_id,omitempty" bson:"origin_id,omitempty"`
 	Amount           float64   `json:"amount" validate:"required"`
 	Type             string    `json:"type" validate:"required"`
+	OutputCategory   string    `json:"output_category" bson:"output_category"`
 	Subject          string    `json:"subject" validate:"required"`
 	PersonOrBusiness string    `json:"person_business" bson:"person_business" validate:"required"`
 	Description      string    `json:"description" validate:"required"`

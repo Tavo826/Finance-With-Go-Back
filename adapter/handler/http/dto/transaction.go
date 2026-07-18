@@ -30,6 +30,7 @@ type TransactionRequest struct {
 	OriginId         string    `json:"origin_id" bson:"origin_id"`
 	Type             string    `json:"type" validate:"required"`
 	Subject          string    `json:"subject" validate:"required"`
+	OutputCategory   string    `json:"output_category" bson:"output_category"`
 	PersonOrBusiness string    `json:"person_business" bson:"person_business" validate:"required"`
 	Description      string    `json:"description" validate:"required"`
 	CreatedAtString  string    `json:"created" bson:"created" validate:"required"`
