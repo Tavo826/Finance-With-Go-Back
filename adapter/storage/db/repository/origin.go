@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type OriginRepository struct {
@@ -29,7 +30,9 @@ func (or *OriginRepository) GetOriginsByUserId(ctx context.Context, userId strin
 		"user_id": userId,
 	}
 
-	cursor, err := or.db.Find(ctx, filter)
+	findOptions := options.Find().SetSort(bson.D{{Key: "name", Value: 1}})
+
+	cursor, err := or.db.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, err
 	}
