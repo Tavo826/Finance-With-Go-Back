@@ -172,24 +172,11 @@ func (tr *TransactionRepository) GetTransactionsBySubject(
 	userId string,
 	page, limit uint64,
 	subject string,
-	personOrBusiness string,
 ) ([]domain.Transaction, int64, int, error) {
 
-	var subjectFilter bson.M
-
-	if personOrBusiness == "" {
-
-		subjectFilter = bson.M{
-			"user_id": userId,
-			"subject": subject,
-		}
-	} else {
-
-		subjectFilter = bson.M{
-			"user_id":         userId,
-			"subject":         subject,
-			"person_business": personOrBusiness,
-		}
+	subjectFilter := bson.M{
+		"user_id": userId,
+		"subject": subject,
 	}
 
 	pipeline := mongo.Pipeline{

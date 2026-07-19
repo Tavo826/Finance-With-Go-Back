@@ -108,7 +108,7 @@ func (th *TransactionHandler) GetTransactionsBySubject(ctx *gin.Context) {
 		return
 	}
 
-	transactions, totalDocuments, totalPages, err := th.service.GetTransactionsBySubject(ctx, req.UserId, req.Page, req.Limit, req.Subject, req.PersonOrBusiness)
+	transactions, totalDocuments, totalPages, err := th.service.GetTransactionsBySubject(ctx, req.UserId, req.Page, req.Limit, req.Subject)
 	if err != nil {
 		dto.HandleError(ctx, err)
 		return

@@ -16,8 +16,7 @@ type DateFilterRequest struct {
 
 type SubjectFilterRequest struct {
 	*TransactionByUserRequest
-	Subject          string `form:"subject" binding:"required"`
-	PersonOrBusiness string `form:"person_business"`
+	Subject string `form:"subject" binding:"required"`
 }
 
 type IdRequest struct {

@@ -58,10 +58,9 @@ func (ts *TransactionService) GetTransactionsBySubject(
 	userId string,
 	page, limit uint64,
 	subject string,
-	personOrBusiness string,
 ) ([]domain.Transaction, int64, int, error) {
 
-	transactions, totalDocuments, totalPages, err := ts.transactionRepo.GetTransactionsBySubject(ctx, userId, page, limit, subject, personOrBusiness)
+	transactions, totalDocuments, totalPages, err := ts.transactionRepo.GetTransactionsBySubject(ctx, userId, page, limit, subject)
 	if err != nil {
 		return nil, 0, 0, domain.ErrInternal
 	}

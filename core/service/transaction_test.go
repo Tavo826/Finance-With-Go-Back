@@ -22,7 +22,7 @@ func (m *mockTransactionRepo) GetTransactionsByDate(ctx context.Context, userId 
 	return nil, 0, 0, nil
 }
 
-func (m *mockTransactionRepo) GetTransactionsBySubject(ctx context.Context, userId string, page, limit uint64, subject string, personOrBusiness string) ([]domain.Transaction, int64, int, error) {
+func (m *mockTransactionRepo) GetTransactionsBySubject(ctx context.Context, userId string, page, limit uint64, subject string) ([]domain.Transaction, int64, int, error) {
 	return nil, 0, 0, nil
 }
 
