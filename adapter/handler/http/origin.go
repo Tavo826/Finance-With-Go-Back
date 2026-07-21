@@ -116,11 +116,12 @@ func (oh *OriginHandler) UpdateOrigin(ctx *gin.Context) {
 	id := ctx.Param("id")
 
 	origin := domain.Origin{
-		UserId:    req.UserId,
-		Name:      req.Name,
-		Total:     req.Total,
-		CreatedAt: req.CreatedAt,
-		UpdatedAt: time.Now(),
+		UserId:      req.UserId,
+		Name:        req.Name,
+		Total:       req.Total,
+		Description: req.Description,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   time.Now(),
 	}
 
 	_, err := oh.service.UpdateOrigin(ctx, id, &origin)
