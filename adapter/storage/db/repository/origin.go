@@ -86,11 +86,12 @@ func (or *OriginRepository) UpdateOrigin(ctx context.Context, id string, updated
 	}
 
 	origin := domain.OriginRequest{
-		UserId:    updatedOrigin.UserId,
-		Name:      updatedOrigin.Name,
-		Total:     updatedOrigin.Total,
-		CreatedAt: updatedOrigin.CreatedAt,
-		UpdatedAt: time.Now(),
+		UserId:      updatedOrigin.UserId,
+		Name:        updatedOrigin.Name,
+		Total:       updatedOrigin.Total,
+		Description: updatedOrigin.Description,
+		CreatedAt:   updatedOrigin.CreatedAt,
+		UpdatedAt:   time.Now(),
 	}
 
 	update := bson.M{"$set": origin}
