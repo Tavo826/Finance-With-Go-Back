@@ -66,7 +66,7 @@ func NewRouter(
 		{
 			transaction.GET("/", transactionHandler.GetTransactionsByUserId)
 			transaction.GET("/filter_date", transactionHandler.GetTransactionsByDate)
-			transaction.GET("/filter_subject", transactionHandler.GetTransactionsBySubject)
+			transaction.GET("/filter_type", transactionHandler.GetTransactionsByType)
 			transaction.GET("/:id", transactionHandler.GetTransactionById)
 			transaction.POST("/", transactionHandler.CreateTransaction)
 			transaction.PUT("/:id", transactionHandler.UpdateTransaction)

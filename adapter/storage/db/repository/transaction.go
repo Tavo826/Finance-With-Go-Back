@@ -167,22 +167,22 @@ func (tr *TransactionRepository) GetTransactionsByDate(
 	return tr.findtransactionUsingPipeline(ctx, pipeline, userId, limit)
 }
 
-func (tr *TransactionRepository) GetTransactionsBySubject(
+func (tr *TransactionRepository) GetTransactionsByType(
 	ctx context.Context,
 	userId string,
 	page, limit uint64,
-	subject string,
+	transaction_type string,
 ) ([]domain.Transaction, int64, int, error) {
 
-	subjectFilter := bson.M{
+	typeFilter := bson.M{
 		"user_id": userId,
-		"subject": subject,
+		"type":    transaction_type,
 	}
 
 	pipeline := mongo.Pipeline{
 
 		// Filter by user and date
-		{{Key: "$match", Value: subjectFilter}},
+		{{Key: "$match", Value: typeFilter}},
 
 		// origin_id to ObjectId
 		{{Key: "$addFields", Value: bson.D{

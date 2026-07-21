@@ -98,9 +98,9 @@ func (th *TransactionHandler) GetTransactionsByDate(ctx *gin.Context) {
 	dto.HandleSuccess(ctx, response)
 }
 
-func (th *TransactionHandler) GetTransactionsBySubject(ctx *gin.Context) {
+func (th *TransactionHandler) GetTransactionsByType(ctx *gin.Context) {
 
-	var req dto.SubjectFilterRequest
+	var req dto.TypeFilterRequest
 	var transactionList []dto.TransactionResponse
 
 	if err := ctx.Bind(&req); err != nil {
@@ -108,7 +108,7 @@ func (th *TransactionHandler) GetTransactionsBySubject(ctx *gin.Context) {
 		return
 	}
 
-	transactions, totalDocuments, totalPages, err := th.service.GetTransactionsBySubject(ctx, req.UserId, req.Page, req.Limit, req.Subject)
+	transactions, totalDocuments, totalPages, err := th.service.GetTransactionsByType(ctx, req.UserId, req.Page, req.Limit, req.Type)
 	if err != nil {
 		dto.HandleError(ctx, err)
 		return

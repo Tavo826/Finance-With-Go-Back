@@ -53,14 +53,14 @@ func (ts *TransactionService) GetTransactionsByDate(
 	return transactions, totalDocuments, totalPages, nil
 }
 
-func (ts *TransactionService) GetTransactionsBySubject(
+func (ts *TransactionService) GetTransactionsByType(
 	ctx context.Context,
 	userId string,
 	page, limit uint64,
-	subject string,
+	transaction_type string,
 ) ([]domain.Transaction, int64, int, error) {
 
-	transactions, totalDocuments, totalPages, err := ts.transactionRepo.GetTransactionsBySubject(ctx, userId, page, limit, subject)
+	transactions, totalDocuments, totalPages, err := ts.transactionRepo.GetTransactionsByType(ctx, userId, page, limit, transaction_type)
 	if err != nil {
 		return nil, 0, 0, domain.ErrInternal
 	}
